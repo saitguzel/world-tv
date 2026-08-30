@@ -6,13 +6,13 @@ plugins {
 
 android {
     namespace = "com.worldtv.baselineprofile"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         // Baseline profiles are only honoured from API 28 up, and the generator needs
         // a rooted or userdebug image, so this module's floor is higher than the app's.
         minSdk = 28
-        targetSdk = 36
+        targetSdk = 37
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.worldtv.feature.player"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 23

@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.worldtv.core.database"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 23
