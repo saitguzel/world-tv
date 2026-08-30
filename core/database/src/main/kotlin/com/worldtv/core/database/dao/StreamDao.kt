@@ -163,6 +163,23 @@ interface StreamDao {
         isVod: Boolean,
     ): Int
 
+    /**
+     * Brings every stream forward to due, and gives hidden ones a fresh start.
+     *
+     * `consecutiveFailures` is cleared for DEAD rows only: a stream that has failed
+     * twice keeps that history, so an explicit recheck does not quietly grant an
+     * already-failing stream a clean slate it has not earned.
+     */
+    @Query(
+        """
+        UPDATE streams SET
+            nextCheckAt = :now,
+            state = CASE WHEN state = 'DEAD' THEN 'UNKNOWN' ELSE state END,
+            consecutiveFailures = CASE WHEN state = 'DEAD' THEN 0 ELSE consecutiveFailures END
+        """,
+    )
+    suspend fun markAllDue(now: Long): Int
+
     /** DEAD streams past their cool-off go back to UNKNOWN. Roughly one in eight returns. */
     @Query(
         """

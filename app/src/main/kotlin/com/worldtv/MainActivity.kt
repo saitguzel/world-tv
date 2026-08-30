@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val reduceMotion by reduceMotionFlow.collectAsStateWithLifecycle()
             WorldTvTheme(reduceMotion = reduceMotion) {
-                WorldTvNavHost()
+                WorldTvNavHost(onExit = ::finish)
             }
         }
     }

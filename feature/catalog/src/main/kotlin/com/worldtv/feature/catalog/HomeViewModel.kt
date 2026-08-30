@@ -7,6 +7,7 @@ import com.worldtv.core.model.Country
 import com.worldtv.data.repository.ChannelRepository
 import com.worldtv.data.repository.HealthRepository
 import com.worldtv.data.repository.PlaybackQueueHolder
+import com.worldtv.data.repository.SyncTrigger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,7 +28,11 @@ class HomeViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val healthRepository: HealthRepository,
     private val playbackQueue: PlaybackQueueHolder,
+    private val syncTrigger: SyncTrigger,
 ) : ViewModel() {
+
+    val isSyncing: StateFlow<Boolean> = syncTrigger.isSyncing
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     val uiState: StateFlow<HomeUiState> = combine(
         channelRepository.recents(limit = 12),
@@ -43,6 +48,14 @@ class HomeViewModel @Inject constructor(
             isEmpty = recents.isEmpty() && favorites.isEmpty() && countries.isEmpty(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
+
+    /**
+     * Retry for a first run whose catalog sync failed.
+     *
+     * Without this the user is stuck on an empty home screen until the periodic
+     * worker comes round again, with nothing to press.
+     */
+    fun retrySync() = syncTrigger.syncNow()
 
     /** Home rows are short, so everything on them is worth verifying eagerly. */
     fun verifyVisibleRows() {

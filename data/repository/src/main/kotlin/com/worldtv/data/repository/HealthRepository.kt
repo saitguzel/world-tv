@@ -97,6 +97,19 @@ class HealthRepository @Inject constructor(
         }
     }
 
+    /**
+     * Makes every stream due for another check, including ones currently hidden.
+     *
+     * Reschedules rather than probing: the sweep worker already paces itself within a
+     * budget and honours the priority order, so the user's own country is re-verified
+     * long before the tail of the catalog.
+     */
+    suspend fun recheckAll() = withContext(io) {
+        val now = time.nowMillis()
+        streamDao.markAllDue(now)
+        streamDao.reviveExpired(now)
+    }
+
     /** Explicit "check my favourites now" from settings or a long-press. */
     suspend fun refreshFavorites(): Int {
         applyConfig()

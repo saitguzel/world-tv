@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.worldtv.data.repository.HealthAggressiveness
 import com.worldtv.data.repository.HealthRepository
 import com.worldtv.data.repository.UserPreferences
+import com.worldtv.data.repository.SyncTrigger
 import com.worldtv.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 
 data class SettingsUiState(
     val preferences: UserPreferences = UserPreferences(),
+    val isSyncing: Boolean = false,
     val verifiedStreams: Int = 0,
     val deadStreams: Int = 0,
 )
@@ -24,15 +26,33 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     private val preferences: UserPreferencesRepository,
     private val healthRepository: HealthRepository,
+    private val syncTrigger: SyncTrigger,
 ) : ViewModel() {
 
     val uiState: StateFlow<SettingsUiState> = combine(
         preferences.preferences,
         healthRepository.verifiedCount,
         healthRepository.deadCount,
-    ) { prefs, verified, dead ->
-        SettingsUiState(prefs, verified, dead)
+        syncTrigger.isSyncing,
+    ) { prefs, verified, dead, syncing ->
+        SettingsUiState(
+            preferences = prefs,
+            isSyncing = syncing,
+            verifiedStreams = verified,
+            deadStreams = dead,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
+
+    fun resyncCatalog() = syncTrigger.syncNow()
+
+    /**
+     * Re-checks everything, immediately.
+     *
+     * Resets `nextCheckAt` rather than probing inline: the sweep worker already knows
+     * how to pace this within a budget, and doing it here would block the UI for
+     * minutes on a large catalog.
+     */
+    fun recheckEverything() = viewModelScope.launch { healthRepository.recheckAll() }
 
     fun setShowNsfw(value: Boolean) = viewModelScope.launch { preferences.setShowNsfw(value) }
 

@@ -10,6 +10,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.worldtv.data.repository.SyncTrigger
 import com.worldtv.data.sync.worker.CatalogSyncWorker
 import com.worldtv.data.sync.worker.CleanupWorker
 import com.worldtv.data.sync.worker.FavoritesHealthWorker
@@ -30,7 +31,7 @@ import kotlinx.coroutines.flow.map
 @Singleton
 class SyncScheduler @Inject constructor(
     @ApplicationContext private val context: Context,
-) {
+) : SyncTrigger {
     private val workManager get() = WorkManager.getInstance(context)
 
     fun scheduleAll() {
@@ -77,7 +78,7 @@ class SyncScheduler @Inject constructor(
     }
 
     /** First-run and "resync now" from settings. REPLACE so the user sees it happen. */
-    fun syncNow() {
+    override fun syncNow() {
         workManager.enqueueUniqueWork(
             CATALOG_SYNC_NOW,
             ExistingWorkPolicy.REPLACE,
@@ -92,7 +93,7 @@ class SyncScheduler @Inject constructor(
     }
 
     /** True while a catalog sync is running, for the first-run progress state. */
-    val isSyncing: Flow<Boolean> = workManager
+    override val isSyncing: Flow<Boolean> = workManager
         .getWorkInfosForUniqueWorkFlow(CATALOG_SYNC_NOW)
         .map { infos -> infos.any { it.state == WorkInfo.State.RUNNING } }
 

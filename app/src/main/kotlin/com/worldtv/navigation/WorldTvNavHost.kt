@@ -38,7 +38,10 @@ object Routes {
 }
 
 @Composable
-fun WorldTvNavHost(navController: NavHostController = rememberNavController()) {
+fun WorldTvNavHost(
+    onExit: () -> Unit = {},
+    navController: NavHostController = rememberNavController(),
+) {
     val toPlayer: (String) -> Unit = { channelId ->
         navController.navigate(Routes.player(channelId))
     }
@@ -46,10 +49,12 @@ fun WorldTvNavHost(navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = Routes.HOME) {
         composable(Routes.HOME) {
             HomeScreen(
+                onExit = onExit,
                 onChannelSelected = toPlayer,
                 onBrowse = { navController.navigate(Routes.browse()) },
                 onSearch = { navController.navigate(Routes.SEARCH) },
                 onRadio = { navController.navigate(Routes.RADIO) },
+                onFavorites = { navController.navigate(Routes.FAVORITES) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
                 onCountrySelected = { code -> navController.navigate(Routes.browse(code)) },
             )

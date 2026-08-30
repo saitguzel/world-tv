@@ -12,6 +12,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusGroup
 import androidx.compose.ui.focus.focusRestorer
@@ -22,6 +25,8 @@ import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.component.ChannelCard
+import com.worldtv.core.designsystem.component.DoubleBackToExit
+import com.worldtv.core.designsystem.component.EmptyState
 import com.worldtv.core.designsystem.component.LoadingState
 import com.worldtv.core.designsystem.component.TvShelf
 import com.worldtv.core.designsystem.theme.WorldTvColors
@@ -37,21 +42,50 @@ import com.worldtv.core.model.ChannelSummary
  */
 @Composable
 fun HomeScreen(
+    onExit: () -> Unit,
     onChannelSelected: (String) -> Unit,
     onBrowse: () -> Unit,
     onSearch: () -> Unit,
     onRadio: () -> Unit,
+    onFavorites: () -> Unit,
     onSettings: () -> Unit,
     onCountrySelected: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var showExitPrompt by remember { mutableStateOf(false) }
+
+    // The only place BACK can leave the app, and only on a second press: an
+    // accidental exit costs a full cold start on a TV.
+    DoubleBackToExit(
+        onPrompt = { showExitPrompt = true },
+        onExit = onExit,
+    )
 
     LaunchedEffect(state.recents.size, state.favorites.size) { viewModel.verifyVisibleRows() }
 
+    LaunchedEffect(showExitPrompt) {
+        if (showExitPrompt) {
+            kotlinx.coroutines.delay(2_000)
+            showExitPrompt = false
+        }
+    }
+
     if (state.isEmpty) {
-        LoadingState(message = "Katalog ilk kez indiriliyor…", modifier = modifier)
+        val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
+        if (isSyncing) {
+            LoadingState(message = "Katalog ilk kez indiriliyor…", modifier = modifier)
+        } else {
+            // A failed first sync must leave something focusable on screen, or the
+            // remote does nothing and the app looks broken rather than empty.
+            EmptyState(
+                message = "Katalog henüz indirilmedi.",
+                actionLabel = "Şimdi indir",
+                onAction = viewModel::retrySync,
+                modifier = modifier,
+            )
+        }
         return
     }
 
@@ -65,6 +99,17 @@ fun HomeScreen(
             vertical = WorldTvDimens.ScreenPadding,
         ),
     ) {
+        if (showExitPrompt) {
+            item {
+                Text(
+                    text = "Çıkmak için tekrar geri tuşuna basın",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = WorldTvColors.OnSurfaceMuted,
+                    modifier = Modifier.padding(horizontal = WorldTvDimens.ScreenPadding),
+                )
+            }
+        }
+
         item {
             Row(
                 Modifier
@@ -75,6 +120,7 @@ fun HomeScreen(
                 Button(onClick = onBrowse) { Text("TV") }
                 Button(onClick = onRadio) { Text("Radyo") }
                 Button(onClick = onSearch) { Text("Ara") }
+                Button(onClick = onFavorites) { Text("Favoriler") }
                 Button(onClick = onSettings) { Text("Ayarlar") }
             }
         }

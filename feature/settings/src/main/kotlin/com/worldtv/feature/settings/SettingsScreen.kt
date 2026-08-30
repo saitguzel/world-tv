@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.item
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -76,6 +75,35 @@ fun SettingsScreen(
                 title = "Animasyonları azalt",
                 checked = state.preferences.reduceMotion,
                 onCheckedChange = viewModel::setReduceMotion,
+            )
+        }
+
+        item {
+            ListItem(
+                selected = false,
+                onClick = viewModel::resyncCatalog,
+                headlineContent = { Text("Katalogu şimdi yenile") },
+                supportingContent = {
+                    Text(
+                        if (state.isSyncing) {
+                            "Yenileniyor…"
+                        } else {
+                            "Değişmemiş dosyalar tekrar indirilmez"
+                        },
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            ListItem(
+                selected = false,
+                onClick = viewModel::recheckEverything,
+                headlineContent = { Text("Tüm yayınları yeniden kontrol et") },
+                supportingContent = {
+                    Text("Gizlenen yayınlar da dahil, arka planda kademeli olarak")
+                },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
 
