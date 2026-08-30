@@ -246,9 +246,15 @@ ekranında.
 Bu depo yazılırken kullanılan ortamda **Android SDK ve Google Maven
 (`dl.google.com`) ağ politikası tarafından engelli**. Bu nedenle:
 
-- ✅ `:core:model` ve `:data:health` — kotlinc 2.x ile derlendi, **29 birim
-  testin tamamı geçiyor** (durum makinesi, HLS ayrıştırma, URL sınıflandırma,
-  host kısıtlama).
+- ✅ `:core:model` ve `:data:health` — kotlinc ile derlendi, **63 testin tamamı
+  geçiyor**: durum makinesi, HLS ayrıştırma, URL sınıflandırma, host kısıtlama,
+  zap kuyruğu, MockWebServer'a karşı HTTP sondası ve `HealthChecker`
+  orkestrasyonu.
+
+  Yukarıdaki A2 (sınırsız okuma) düzeltmesi için özel bir regresyon testi var:
+  `Range` başlığını yok sayıp bitimsiz gövde dönen bir sunucuya karşı sonda 15
+  saniyelik timeout içinde karar üretiyor. Düzeltme öncesi kod bu testte
+  takılırdı.
 - ⚠️ Android modülleri (Room/KSP/Hilt/Compose) — bu ortamda derlenemedi.
   Android SDK'sı olan bir makinede `./gradlew assembleDebug` ilk çalıştırmada
   sürüm uyuşmazlıkları için `gradle/libs.versions.toml` içindeki `androidx.*`

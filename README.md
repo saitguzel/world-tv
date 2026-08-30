@@ -23,8 +23,8 @@ Mimari incelemesi ve dokümandan sapmaların gerekçeleri:
 
 ```bash
 ./gradlew assembleDebug
-./gradlew :data:health:test        # sağlık motoru birim testleri (emülatör gerekmez)
-./gradlew :app:connectedAndroidTest # D-pad odak regresyon testleri
+./gradlew :data:health:test :core:model:test   # 63 test, emülatör gerekmez
+./gradlew :app:connectedAndroidTest            # D-pad odak regresyon testleri
 ```
 
 Android SDK 36 ve JDK 17 gerekir.
