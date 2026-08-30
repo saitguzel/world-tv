@@ -14,7 +14,8 @@ patladığında aynı kanalın alternatifine sessizce geçer.
 | 2 | Sağlık motoru: Kademe 1+2, durum makinesi, sweep worker, tembel doğrulama, oynatma anında düşürme | ✅ |
 | 3 | Radyo + MediaSessionService, favoriler, arama, son izlenenler, ayarlar | ✅ |
 | 4 | YouTube | ⛔ kapsam dışı bırakıldı — [gerekçe](ARCHITECTURE-REVIEW.md#i-youtube-neden-kapsam-dışı) |
-| 5 | Baseline Profile, EPG (XMLTV), Assistant ile sesli arama, kanal önizleme, altyazı/ses seçimi | ✅ |
+| 5 | EPG (XMLTV), Assistant ile sesli arama, kanal önizleme, altyazı/ses seçimi | ✅ |
+| 5 | Baseline Profile | ⏸ AGP 9 desteği henüz alpha'da — [gerekçe](ARCHITECTURE-REVIEW.md#j-baseline-profile-neden-ertelendi) |
 
 Mimari incelemesi ve dokümandan sapmaların gerekçeleri:
 [`ARCHITECTURE-REVIEW.md`](ARCHITECTURE-REVIEW.md).
@@ -28,7 +29,6 @@ Derleme:
 ```bash
 ./gradlew assembleDebug
 ./gradlew :data:health:test :core:model:test :data:sync:test   # 100 test, emülatör gerekmez
-./gradlew :baselineprofile:generateBaselineProfile              # rootlu emülatör/userdebug cihaz gerekir
 ./gradlew :app:connectedAndroidTest            # D-pad odak regresyon testleri
 ```
 
@@ -122,7 +122,6 @@ adlandırılacağına arayüz karar veriyor.
 :data:repository      Repository implementasyonları, Room ↔ sağlık motoru köprüsü
 :data:sync            Katalog senkronizasyonu, WorkManager işleri
 :feature:*            catalog, player, radio, favorites, settings
-:baselineprofile      Macrobenchmark ile baseline profile üretimi
 ```
 
 `:core:model` ve `:data:health` bilinçli olarak Android'e bağımlı değil. Bu,

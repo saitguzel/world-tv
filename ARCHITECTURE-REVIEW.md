@@ -231,6 +231,36 @@ ekranında.
 
 ---
 
+## J. Baseline Profile neden ertelendi
+
+Faz 5'te `:baselineprofile` modülü ve macrobenchmark üreteci yazıldı, sonra
+CI'da kaldırıldı.
+
+Proje AGP 9'a geçince (yukarıdaki bağımlılık zinciri gereği), baseline profile
+eklentisi 1.4.1 uygulama modülünü tanımaz oldu:
+
+```
+Failed to apply plugin class 'BaselineProfileAppTargetPlugin'.
+> Module `:app` is not a supported android module.
+```
+
+AGP 9'u destekleyen tek sürüm hattı `androidx.benchmark` **1.5.0-alpha**.
+Karşılaştırma:
+
+- Profil zaten CI'da üretilemiyor — rootlu emülatör veya userdebug cihaz
+  gerektiriyor.
+- Profil üretilene kadar APK'ya hiçbir katkısı yok.
+- Buna karşılık eklenti **her derlemeyi** bloke ediyor.
+
+Yani bir alpha sürüme bağlanıp tüm derlemeyi riske atmanın karşılığı, ancak
+birisi fiziksel cihazda üreteci çalıştırdığında ortaya çıkacak bir kazanç.
+Doküman da bunu Bölüm 12'de "Faz 5 — Cila" altında sayıyor.
+
+`androidx.benchmark` 1.5 kararlı sürüme geçtiğinde geri eklemek, modülü ve iki
+satır eklenti tanımını geri koymaktan ibaret.
+
+---
+
 ## I. YouTube neden kapsam dışı
 
 Faz 4 uygulandı, sonra araştırma sonrası **kaldırıldı**. Karar gerekçesi:

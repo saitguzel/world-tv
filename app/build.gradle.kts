@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.baselineprofile)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
@@ -57,13 +56,6 @@ kotlin {
     }
 }
 
-baselineProfile {
-    // Only this app's own classes. Profiling AndroidX internals bloats the profile
-    // without helping startup, since those are already covered by the platform's.
-    filter {
-        include("com.worldtv.**")
-    }
-}
 
 dependencies {
     implementation(projects.core.model)
@@ -100,11 +92,6 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
-
-    // Installs the baseline profile at first run on devices without Play's
-    // profile delivery — which is most Android TV boxes.
-    implementation(libs.androidx.profileinstaller)
-    baselineProfile(projects.baselineprofile)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
