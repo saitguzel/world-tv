@@ -57,6 +57,14 @@ kotlin {
     }
 }
 
+baselineProfile {
+    // Only this app's own classes. Profiling AndroidX internals bloats the profile
+    // without helping startup, since those are already covered by the platform's.
+    filter {
+        include("com.worldtv.**")
+    }
+}
+
 dependencies {
     implementation(projects.core.model)
     implementation(projects.core.common)

@@ -31,11 +31,9 @@ kotlin {
 }
 
 baselineProfile {
-    // The generated profile is copied into :app rather than kept here, so a release
-    // build picks it up with no extra wiring.
-    filter {
-        include("com.worldtv.**")
-    }
+    // A generator run leaves the device in whatever state the journey ended in;
+    // reinstalling between iterations keeps one run from seeding the next.
+    useConnectedDevices = true
 }
 
 dependencies {
