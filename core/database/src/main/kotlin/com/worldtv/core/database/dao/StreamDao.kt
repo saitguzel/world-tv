@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.worldtv.core.database.entity.StreamEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -174,6 +175,37 @@ interface StreamDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIgnoringExisting(streams: List<StreamEntity>): List<Long>
+
+    /**
+     * Catalog upsert that preserves everything the health engine has learned.
+     *
+     * `INSERT OR IGNORE` returns -1 for a row that already existed; those get a
+     * targeted catalog-column update instead of a replace, so a resync never resets
+     * `state`, `consecutiveFailures` or `nextCheckAt`. That history is the one thing
+     * the app cannot re-download.
+     *
+     * `@Transaction` on a default method keeps the whole batch atomic without pulling
+     * room-ktx into the sync module.
+     */
+    @Transaction
+    suspend fun upsertPreservingHealth(streams: List<StreamEntity>, syncedAt: Long) {
+        val insertResults = insertIgnoringExisting(streams)
+        streams.forEachIndexed { index, entity ->
+            if (insertResults.getOrNull(index) == -1L) {
+                updateCatalogFields(
+                    id = entity.id,
+                    channelId = entity.channelId,
+                    title = entity.title,
+                    quality = entity.quality,
+                    referrer = entity.referrer,
+                    userAgent = entity.userAgent,
+                    label = entity.label,
+                    kind = entity.kind,
+                    updatedAt = syncedAt,
+                )
+            }
+        }
+    }
 
     /**
      * Refreshes catalog columns for streams that already exist, leaving their health
