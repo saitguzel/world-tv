@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WorldTV</string>
+    <string name="search_hint">Kanal ara</string>
+
+    <string name="mode_tv">TV</string>
+    <string name="mode_radio">Radyo</string>
+    <string name="mode_youtube">YouTube</string>
+
+    <string name="home_continue">Devam et</string>
+    <string name="home_favorites">Favoriler</string>
+    <string name="home_countries">Ülkeler</string>
+    <string name="home_categories">Kategoriler</string>
+
+    <string name="state_verified">Doğrulandı</string>
+    <string name="state_unchecked">Henüz kontrol edilmedi</string>
+    <string name="state_geo_blocked">Bölgesel kısıtlı olabilir</string>
+    <string name="state_unavailable">Şu an kullanılamıyor</string>
+
+    <string name="player_trying_alternative">Alternatif kaynak deneniyor…</string>
+    <string name="player_channel_unavailable">Bu kanalın çalışan yayını bulunamadı</string>
+    <string name="player_geo_warning">Bu yayın bölgenizde engelli olabilir</string>
+
+    <string name="action_retry">Yeniden dene</string>
+    <string name="action_favorite_add">Favorilere ekle</string>
+    <string name="action_favorite_remove">Favorilerden çıkar</string>
+    <string name="empty_no_channels">Bu listede kanal yok</string>
+    <string name="exit_confirm">Çıkmak için tekrar geri tuşuna basın</string>
+
+    <string name="settings_title">Ayarlar</string>
+    <string name="settings_show_nsfw">Yetişkin kanallarını göster</string>
+    <string name="settings_show_unchecked">Kontrol edilmemiş yayınları göster</string>
+    <string name="settings_show_geo_blocked">Bölgesel kısıtlı yayınları göster</string>
+    <string name="settings_health_aggressiveness">Sağlık kontrolü yoğunluğu</string>
+    <string name="settings_clear_cache">Önbelleği temizle</string>
+    <string name="settings_resync">Katalogu şimdi yenile</string>
+    <string name="settings_disclaimer">WorldTV hiçbir içerik barındırmaz veya yayınlamaz. Tüm yayın adresleri herkese açık iptv-org ve Radio Browser dizinlerinden gelir.</string>
+</resources>

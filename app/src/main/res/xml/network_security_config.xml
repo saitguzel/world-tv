@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A large share of IPTV origins are still plain HTTP, so cleartext has to be allowed
+  app-wide for media traffic. The catalog APIs are pinned to HTTPS in code instead
+  (see ApiHttpsOnlyInterceptor in :core:network) rather than here, because
+  domain-config entries cannot express "everything except these hosts".
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">iptv-org.github.io</domain>
+        <domain includeSubdomains="true">api.radio-browser.info</domain>
+        <domain includeSubdomains="true">all.api.radio-browser.info</domain>
+        <domain includeSubdomains="true">googleapis.com</domain>
+    </domain-config>
+</network-security-config>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- #0F0F0F rather than pure black: OLED panels band and smear on #000. -->
+    <color name="surface">#FF0F0F0F</color>
+</resources>
