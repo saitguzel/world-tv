@@ -33,6 +33,8 @@ dependencies {
     api(libs.androidx.compose.ui)
     api(libs.androidx.compose.ui.graphics)
     api(libs.androidx.tv.material)
+    // BackHandler, used by DoubleBackToExit.
+    api(libs.androidx.activity.compose)
     api(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.androidx.compose.ui.tooling.preview)

@@ -30,7 +30,11 @@ sealed interface CatalogFetch<out T> {
  * Room in batches as the sequence is consumed.
  */
 @Singleton
-class CatalogDownloader @Inject constructor(private val json: Json) {
+class CatalogDownloader @Inject constructor(
+    // @PublishedApi rather than private: `parse` is inline (it needs `reified T` for
+    // the serializer) and an inline function cannot reach a private member.
+    @PublishedApi internal val json: Json,
+) {
 
     /**
      * Turns a Retrofit response into a lazily-decoded sequence.

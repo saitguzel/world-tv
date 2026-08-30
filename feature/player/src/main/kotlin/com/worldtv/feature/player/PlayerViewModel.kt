@@ -1,0 +1,234 @@
+package com.worldtv.feature.player
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import com.worldtv.core.model.Channel
+import com.worldtv.core.model.Stream
+import com.worldtv.core.model.StreamState
+import com.worldtv.core.model.TimeProvider
+import com.worldtv.data.health.PlaybackSignal
+import com.worldtv.data.repository.ChannelRepository
+import com.worldtv.data.repository.FavoritesRepository
+import com.worldtv.data.repository.HealthRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+data class PlayerUiState(
+    val channel: Channel? = null,
+    val stream: Stream? = null,
+    val streamIndex: Int = 0,
+    val totalStreams: Int = 0,
+    val isBuffering: Boolean = true,
+    val showChannelCard: Boolean = false,
+    val showOverlay: Boolean = false,
+    val tryingAlternative: Boolean = false,
+    val geoWarning: Boolean = false,
+    val unavailable: Boolean = false,
+    val isFavorite: Boolean = false,
+)
+
+@HiltViewModel
+class PlayerViewModel @Inject constructor(
+    private val channelRepository: ChannelRepository,
+    private val healthRepository: HealthRepository,
+    private val favoritesRepository: FavoritesRepository,
+    private val playerFactory: PlayerFactory,
+    private val time: TimeProvider,
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(PlayerUiState())
+    val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
+
+    val player: ExoPlayer by lazy { playerFactory.create().also { it.addListener(listener) } }
+
+    private var streams: List<Stream> = emptyList()
+    private var streamIndex = 0
+    private var playbackStartedAt = 0L
+    private var slowLoadJob: Job? = null
+    private var channelCardJob: Job? = null
+
+    /** Debounces rapid zapping so five presses load one channel, not five. */
+    private var zapJob: Job? = null
+
+    private val listener = object : Player.Listener {
+        override fun onPlayerError(error: PlaybackException) {
+            val current = streams.getOrNull(streamIndex) ?: return
+            val signal = PlaybackErrorMapper.toSignal(error)
+
+            // Report before advancing: this is the strongest health signal the app
+            // ever gets, and it must survive the user zapping away immediately.
+            healthRepository.reportPlayback(current.id, signal)
+
+            // A failure of the user's own network is not this stream's fault, so
+            // walking to the next stream would just fail the same way.
+            if (signal is PlaybackSignal.NetworkFailure) {
+                _uiState.update { it.copy(isBuffering = false, tryingAlternative = false) }
+                return
+            }
+            advanceToNextStream()
+        }
+
+        override fun onRenderedFirstFrame() {
+            val current = streams.getOrNull(streamIndex) ?: return
+            val timeToFirstFrame = (time.elapsedMillis() - playbackStartedAt).toInt()
+            healthRepository.reportPlayback(
+                current.id,
+                PlaybackSignal.RenderedFirstFrame(timeToFirstFrame),
+            )
+            slowLoadJob?.cancel()
+            _uiState.update {
+                it.copy(isBuffering = false, tryingAlternative = false, unavailable = false)
+            }
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            _uiState.update { it.copy(isBuffering = playbackState == Player.STATE_BUFFERING) }
+        }
+    }
+
+    fun openChannel(channelId: String) {
+        zapJob?.cancel()
+        zapJob = viewModelScope.launch {
+            // Zap debounce: holding up/down walks a list, and opening every channel
+            // on the way costs a connection each and shows four wasted black frames.
+            delay(ZAP_DEBOUNCE_MS)
+
+            val channel = channelRepository.channel(channelId)
+            streams = channelRepository.streamsFor(channelId)
+            streamIndex = 0
+
+            _uiState.update {
+                it.copy(
+                    channel = channel,
+                    totalStreams = streams.size,
+                    streamIndex = 0,
+                    unavailable = streams.isEmpty(),
+                    showChannelCard = true,
+                )
+            }
+            showChannelCardBriefly()
+            favoritesRepository.recordWatch(channelId, FavoritesRepository.Kind.CHANNEL)
+
+            if (streams.isEmpty()) return@launch
+            playCurrentStream()
+        }
+    }
+
+    private fun playCurrentStream() {
+        val stream = streams.getOrNull(streamIndex) ?: run {
+            _uiState.update { it.copy(unavailable = true, isBuffering = false) }
+            return
+        }
+
+        playbackStartedAt = time.elapsedMillis()
+        _uiState.update {
+            it.copy(
+                stream = stream,
+                streamIndex = streamIndex,
+                isBuffering = true,
+                // A geo-blocked stream is played as a last resort, but the user is
+                // told why it may not work rather than being left with a blank screen.
+                geoWarning = stream.health.state == StreamState.GEO_BLOCKED,
+            )
+        }
+
+        // Per-stream headers mean the media source factory has to be rebuilt for
+        // each stream; sharing one across streams would send the wrong Referer.
+        player.setMediaSource(
+            playerFactory.mediaSourceFactory(stream)
+                .createMediaSource(playerFactory.mediaItem(stream)),
+        )
+        player.prepare()
+        player.playWhenReady = true
+
+        watchForSlowLoad()
+    }
+
+    /**
+     * If nothing has rendered after four seconds, say so and move on.
+     *
+     * ExoPlayer will keep retrying a stalled origin well past the point the user has
+     * decided the app is broken.
+     */
+    private fun watchForSlowLoad() {
+        slowLoadJob?.cancel()
+        slowLoadJob = viewModelScope.launch {
+            delay(SLOW_LOAD_MS)
+            _uiState.update { it.copy(tryingAlternative = true) }
+            delay(SLOW_LOAD_GIVE_UP_MS)
+            val current = streams.getOrNull(streamIndex)
+            if (current != null) {
+                healthRepository.reportPlayback(
+                    current.id,
+                    PlaybackSignal.Failed(PlaybackException.ERROR_CODE_TIMEOUT),
+                )
+            }
+            advanceToNextStream()
+        }
+    }
+
+    /** Walks to the next alternative for the same channel. */
+    private fun advanceToNextStream() {
+        slowLoadJob?.cancel()
+        streamIndex += 1
+        if (streamIndex >= streams.size) {
+            _uiState.update {
+                it.copy(unavailable = true, isBuffering = false, tryingAlternative = false)
+            }
+            return
+        }
+        _uiState.update { it.copy(tryingAlternative = true) }
+        playCurrentStream()
+    }
+
+    fun retry() {
+        streamIndex = 0
+        _uiState.update { it.copy(unavailable = false) }
+        playCurrentStream()
+    }
+
+    fun toggleOverlay() = _uiState.update { it.copy(showOverlay = !it.showOverlay) }
+
+    fun hideOverlay() = _uiState.update { it.copy(showOverlay = false) }
+
+    fun toggleFavorite() {
+        val channelId = _uiState.value.channel?.id ?: return
+        val current = _uiState.value.isFavorite
+        viewModelScope.launch {
+            favoritesRepository.toggle(channelId, FavoritesRepository.Kind.CHANNEL, current)
+            _uiState.update { it.copy(isFavorite = !current) }
+        }
+    }
+
+    private fun showChannelCardBriefly() {
+        channelCardJob?.cancel()
+        channelCardJob = viewModelScope.launch {
+            _uiState.update { it.copy(showChannelCard = true) }
+            delay(CHANNEL_CARD_MS)
+            _uiState.update { it.copy(showChannelCard = false) }
+        }
+    }
+
+    override fun onCleared() {
+        player.removeListener(listener)
+        player.release()
+        super.onCleared()
+    }
+
+    private companion object {
+        const val ZAP_DEBOUNCE_MS = 300L
+        const val CHANNEL_CARD_MS = 3_000L
+        const val SLOW_LOAD_MS = 4_000L
+        const val SLOW_LOAD_GIVE_UP_MS = 4_000L
+    }
+}
