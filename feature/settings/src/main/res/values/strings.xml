@@ -27,5 +27,5 @@
 
     <!-- verified stream count, hidden stream count -->
     <string name="settings_health_summary">%1$d yayın doğrulandı, %2$d yayın gizlendi</string>
-    <string name="settings_disclaimer">WorldTV hiçbir içerik barındırmaz veya yayınlamaz. Tüm yayın adresleri herkese açık iptv-org ve Radio Browser dizinlerinden gelir. Kaldırma talepleri için depodaki iletişim adresini kullanın.</string>
+    <string name="settings_disclaimer">WorldTV hiçbir içerik barındırmaz veya yayınlamaz. Tüm yayın adresleri herkese açık iptv-org ve Radio Browser dizinlerinden gelir.</string>
 </resources>

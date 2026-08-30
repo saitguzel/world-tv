@@ -28,6 +28,10 @@ kotlin {
 }
 
 dependencies {
+    // api, not implementation: ChannelCardState exposes Programme and
+    // HealthBadge in its public signature.
+    api(projects.core.model)
+
     api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.foundation)
     api(libs.androidx.compose.ui)

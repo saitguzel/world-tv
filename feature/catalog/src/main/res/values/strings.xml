@@ -21,10 +21,9 @@
     <string name="browse_retry">Yeniden dene</string>
     <string name="browse_countries">Ülkeler</string>
     <string name="browse_categories">Kategoriler</string>
-    <!-- Measured round-trip of the fastest verified stream. -->
-    <string name="latency_ms">%1$d ms</string>
 
-    <string name="search_hint">Kanal ara</string>
+    <!-- The on-screen placeholder. :app owns search_hint, which searchable.xml reads. -->
+    <string name="search_placeholder">Kanal ara</string>
     <string name="search_voice">Sesle ara</string>
     <string name="search_no_results">Sonuç yok</string>
     <string name="search_start">Aramaya başlayın</string>

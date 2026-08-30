@@ -50,6 +50,8 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(projects.data.health)
+    // PlayerFactory shares the health engine's OkHttp client via @MediaClient.
+    implementation(projects.core.network)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.androidx.media3.exoplayer.dash)

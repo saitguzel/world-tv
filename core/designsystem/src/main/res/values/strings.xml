@@ -9,4 +9,7 @@
     <string name="a11y_now_playing">şu an: %1$s</string>
 
     <string name="programme_next">Sıradaki: %1$s</string>
+
+    <!-- Round-trip of the fastest verified stream for a channel. -->
+    <string name="latency_ms">%1$d ms</string>
 </resources>

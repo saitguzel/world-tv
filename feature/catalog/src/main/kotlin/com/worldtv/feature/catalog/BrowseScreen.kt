@@ -19,12 +19,10 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.worldtv.core.designsystem.component.ChannelCard
-import com.worldtv.core.designsystem.component.ChannelCardState
 import com.worldtv.core.designsystem.component.EmptyState
 import com.worldtv.core.designsystem.component.LoadingState
 import com.worldtv.core.designsystem.component.TvChannelGrid
-import com.worldtv.core.model.ChannelSummary
-import com.worldtv.core.model.Programme
+import com.worldtv.core.designsystem.component.toCardState
 import androidx.compose.ui.res.stringResource
 import com.worldtv.feature.catalog.R
 
@@ -125,12 +123,7 @@ fun BrowseScreen(
                     ) { index ->
                         val summary = channels[index] ?: return@items
                         ChannelCard(
-                            state = summary.toCardState(
-                                nowPlaying = nowPlaying[summary.channel.id],
-                                latencyLabel = summary.bestLatencyMs?.let {
-                                    stringResource(R.string.latency_ms, it)
-                                },
-                            ),
+                            state = summary.toCardState(nowPlaying[summary.channel.id]),
                             onClick = {
                                 // Hand the player the ids loaded in this grid, so
                                 // up/down zaps through what the user was browsing.
@@ -158,17 +151,3 @@ fun BrowseScreen(
     }
 }
 
-internal fun ChannelSummary.toCardState(
-    nowPlaying: Programme? = null,
-    latencyLabel: String? = null,
-): ChannelCardState = ChannelCardState(
-    id = channel.id,
-    name = channel.name,
-    logoUrl = channel.logoUrl,
-    badge = healthBadge,
-    isFavorite = isFavorite,
-    // Falls back to the measured latency only when there is no guide for this
-    // channel — a viewer wants to know what is on, not how fast the socket was.
-    subtitle = latencyLabel,
-    nowPlaying = nowPlaying,
-)

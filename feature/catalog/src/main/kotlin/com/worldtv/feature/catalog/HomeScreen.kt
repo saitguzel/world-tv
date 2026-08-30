@@ -25,6 +25,7 @@ import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.component.ChannelCard
+import com.worldtv.core.designsystem.component.toCardState
 import com.worldtv.core.designsystem.component.DoubleBackToExit
 import com.worldtv.core.designsystem.component.EmptyState
 import com.worldtv.core.designsystem.component.LoadingState

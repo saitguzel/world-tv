@@ -26,6 +26,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.component.ChannelCard
 import com.worldtv.core.designsystem.component.TvChannelGrid
+import com.worldtv.core.designsystem.component.toCardState
 import com.worldtv.core.designsystem.component.TvShelf
 import com.worldtv.core.model.ChannelSummary
 import com.worldtv.core.designsystem.theme.WorldTvColors
@@ -74,7 +75,7 @@ fun SearchScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = query.ifBlank { stringResource(R.string.search_hint) },
+                text = query.ifBlank { stringResource(R.string.search_placeholder) },
                 style = MaterialTheme.typography.headlineMedium,
                 color = if (query.isBlank()) {
                     WorldTvColors.OnSurfaceMuted

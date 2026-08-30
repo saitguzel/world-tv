@@ -14,12 +14,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.component.ChannelCard
-import com.worldtv.core.designsystem.component.ChannelCardState
 import com.worldtv.core.designsystem.component.EmptyState
 import com.worldtv.core.designsystem.component.TvChannelGrid
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
-import com.worldtv.core.model.ChannelSummary
+import com.worldtv.core.designsystem.component.toCardState
 import androidx.compose.ui.res.stringResource
 import com.worldtv.feature.favorites.R
 
@@ -69,11 +68,3 @@ fun FavoritesScreen(
     }
 }
 
-private fun ChannelSummary.toCardState(): ChannelCardState = ChannelCardState(
-    id = channel.id,
-    name = channel.name,
-    logoUrl = channel.logoUrl,
-    badge = healthBadge,
-    isFavorite = true,
-    subtitle = bestLatencyMs?.let { "$it ms" },
-)
