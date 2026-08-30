@@ -53,9 +53,23 @@ class HealthChecker @Inject constructor(
 ) {
 
     @Volatile
-    var config: HealthCheckConfig = HealthCheckConfig()
+    private var currentConfig: HealthCheckConfig = HealthCheckConfig()
 
-    private val hostThrottle = HostThrottle(config.maxPerHost)
+    @Volatile
+    private var hostThrottle: HostThrottle = HostThrottle(currentConfig.maxPerHost)
+
+    /**
+     * Setting this rebuilds the per-host throttle: the semaphores hold the old limit,
+     * so reusing them would silently ignore a change to the aggressiveness setting.
+     */
+    var config: HealthCheckConfig
+        get() = currentConfig
+        set(value) {
+            if (value.maxPerHost != currentConfig.maxPerHost) {
+                hostThrottle = HostThrottle(value.maxPerHost)
+            }
+            currentConfig = value
+        }
 
     /**
      * Probes [targets] and persists the results.

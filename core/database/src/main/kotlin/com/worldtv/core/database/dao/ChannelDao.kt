@@ -178,9 +178,6 @@ interface ChannelDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(channels: List<ChannelEntity>)
 
-    @Query("DELETE FROM channels WHERE updatedAt < :staleBefore")
-    suspend fun deleteStale(staleBefore: Long): Int
-
     @Query("SELECT COUNT(*) FROM channels")
     suspend fun count(): Int
 }

@@ -241,7 +241,4 @@ interface StreamDao {
     /** Archive rather than delete: a stream long dead is still evidence. */
     @Query("DELETE FROM streams WHERE state = 'DEAD' AND lastCheckedAt < :before")
     suspend fun purgeLongDead(before: Long): Int
-
-    @Query("DELETE FROM streams WHERE updatedAt < :staleBefore")
-    suspend fun deleteStale(staleBefore: Long): Int
 }
