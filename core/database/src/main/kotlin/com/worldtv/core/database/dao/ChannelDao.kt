@@ -160,6 +160,33 @@ interface ChannelDao {
     )
     fun search(normalizedQuery: String, showNsfw: Boolean, limit: Int): Flow<List<ChannelWithHealth>>
 
+    /**
+     * Summaries for a specific set of channels, used by the player's channel drawer.
+     *
+     * SQLite does not preserve the order of an `IN` list, so the caller re-sorts into
+     * queue order — the drawer must match what the user was scrolling.
+     */
+    @Transaction
+    @Query(
+        """
+        SELECT c.id, c.name, c.country, c.categories, c.logoUrl, c.isNsfw, c.isClosed,
+               c.replacedBy,
+               COUNT(s.id) AS availableStreams,
+               SUM(CASE WHEN s.state = 'OK' THEN 1 ELSE 0 END) AS verifiedStreams,
+               SUM(CASE WHEN s.state = 'GEO_BLOCKED' THEN 1 ELSE 0 END) AS geoBlockedStreams,
+               MIN(NULLIF(s.lastLatencyMs, 0)) AS bestLatencyMs,
+               (f.id IS NOT NULL) AS isFavorite
+        FROM channels c
+        JOIN streams s ON s.channelId = c.id
+        LEFT JOIN favorites f ON f.id = c.id AND f.kind = 'channel'
+        WHERE c.id IN (:ids)
+          AND c.id NOT IN (SELECT channelId FROM blocklist)
+          AND s.state != 'DEAD'
+        GROUP BY c.id
+        """,
+    )
+    fun summariesByIds(ids: List<String>): Flow<List<ChannelWithHealth>>
+
     @Query("SELECT * FROM channels WHERE id = :id")
     suspend fun channelById(id: String): ChannelEntity?
 

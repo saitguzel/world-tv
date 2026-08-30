@@ -6,6 +6,8 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.worldtv.core.model.Channel
+import com.worldtv.core.model.ChannelQueue
+import com.worldtv.core.model.ChannelSummary
 import com.worldtv.core.model.Stream
 import com.worldtv.core.model.StreamState
 import com.worldtv.core.model.TimeProvider
@@ -13,13 +15,20 @@ import com.worldtv.data.health.PlaybackSignal
 import com.worldtv.data.repository.ChannelRepository
 import com.worldtv.data.repository.FavoritesRepository
 import com.worldtv.data.repository.HealthRepository
+import com.worldtv.data.repository.PlaybackQueueHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -35,6 +44,7 @@ data class PlayerUiState(
     val geoWarning: Boolean = false,
     val unavailable: Boolean = false,
     val isFavorite: Boolean = false,
+    val showChannelDrawer: Boolean = false,
 )
 
 @HiltViewModel
@@ -43,11 +53,28 @@ class PlayerViewModel @Inject constructor(
     private val healthRepository: HealthRepository,
     private val favoritesRepository: FavoritesRepository,
     private val playerFactory: PlayerFactory,
+    private val playbackQueue: PlaybackQueueHolder,
     private val time: TimeProvider,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
+
+    /** The list being zapped through, also rendered by the side channel drawer. */
+    val queue: StateFlow<ChannelQueue> = playbackQueue.queue
+
+    /**
+     * The drawer's contents.
+     *
+     * Only collected while the drawer is open — `WhileSubscribed` means a queue of a
+     * few thousand channels is not held in memory for the whole watching session.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val drawerChannels: StateFlow<List<ChannelSummary>> = playbackQueue.queue
+        .map { it.channelIds }
+        .distinctUntilChanged()
+        .flatMapLatest { ids -> channelRepository.summaries(ids) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(1_000), emptyList())
 
     val player: ExoPlayer by lazy { playerFactory.create().also { it.addListener(listener) } }
 
@@ -96,12 +123,29 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
+    /** Up/down while watching. Wraps at the ends; debounced by [openChannel]. */
+    fun zap(delta: Int) {
+        val next = playbackQueue.shift(delta) ?: return
+        openChannel(next)
+    }
+
+    /** Selecting a channel from the side drawer. */
+    fun jumpTo(channelId: String) {
+        playbackQueue.jumpTo(channelId)
+        closeChannelDrawer()
+        openChannel(channelId)
+    }
+
     fun openChannel(channelId: String) {
         zapJob?.cancel()
         zapJob = viewModelScope.launch {
             // Zap debounce: holding up/down walks a list, and opening every channel
             // on the way costs a connection each and shows four wasted black frames.
             delay(ZAP_DEBOUNCE_MS)
+
+            // Deep links and process death can reach the player without a list
+            // having been browsed, and zapping must still do something sensible.
+            playbackQueue.ensureContains(channelId)
 
             val channel = channelRepository.channel(channelId)
             streams = channelRepository.streamsFor(channelId)
@@ -121,7 +165,21 @@ class PlayerViewModel @Inject constructor(
 
             if (streams.isEmpty()) return@launch
             playCurrentStream()
+            prefetchNeighbours()
         }
+    }
+
+    /**
+     * Warms the neighbouring channels' manifests.
+     *
+     * The health probe fetches the same manifest a zap is about to need, over the same
+     * pooled connection — so the next up/down press skips DNS, TCP and TLS. Worth
+     * roughly a second, which is most of what makes zapping feel instant or not.
+     */
+    private fun prefetchNeighbours() {
+        val neighbours = playbackQueue.queue.value.neighbourIds()
+        if (neighbours.isEmpty()) return
+        healthRepository.verifyVisibleChannels(viewModelScope, neighbours)
     }
 
     private fun playCurrentStream() {
@@ -199,6 +257,10 @@ class PlayerViewModel @Inject constructor(
 
     fun toggleOverlay() = _uiState.update { it.copy(showOverlay = !it.showOverlay) }
 
+    fun openChannelDrawer() = _uiState.update { it.copy(showChannelDrawer = true, showOverlay = false) }
+
+    fun closeChannelDrawer() = _uiState.update { it.copy(showChannelDrawer = false) }
+
     fun hideOverlay() = _uiState.update { it.copy(showOverlay = false) }
 
     fun toggleFavorite() {
@@ -226,6 +288,11 @@ class PlayerViewModel @Inject constructor(
     }
 
     private companion object {
+        /**
+         * Holding up/down walks a list. Loading every channel on the way costs a
+         * connection each and shows the user four black frames they never asked for,
+         * so only the channel they land on is opened.
+         */
         const val ZAP_DEBOUNCE_MS = 300L
         const val CHANNEL_CARD_MS = 3_000L
         const val SLOW_LOAD_MS = 4_000L

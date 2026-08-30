@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -29,7 +30,7 @@ import com.worldtv.core.model.ChannelSummary
 @Composable
 fun BrowseScreen(
     onChannelSelected: (String) -> Unit,
-    onToggleFavorite: (String) -> Unit,
+    initialCountry: String? = null,
     modifier: Modifier = Modifier,
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
@@ -37,6 +38,11 @@ fun BrowseScreen(
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     val channels = viewModel.channels.collectAsLazyPagingItems()
     val gridState = rememberLazyGridState()
+
+    // Arriving from a country tile on Home preselects that country.
+    LaunchedEffect(initialCountry) {
+        if (initialCountry != null) viewModel.setCountry(initialCountry)
+    }
 
     // Snapshot the visible ids and hand them to the health engine once scrolling
     // settles, so probes follow the user rather than the catalog.
@@ -87,8 +93,19 @@ fun BrowseScreen(
                     val summary = channels[index] ?: return@items
                     ChannelCard(
                         state = summary.toCardState(),
-                        onClick = { onChannelSelected(summary.channel.id) },
-                        onLongClick = { onToggleFavorite(summary.channel.id) },
+                        onClick = {
+                            // Hand the player the ids currently loaded in this grid,
+                            // so up/down zaps through what the user was browsing.
+                            viewModel.onChannelOpened(
+                                channelIds = (0 until channels.itemCount)
+                                    .mapNotNull { channels.peek(it)?.channel?.id },
+                                startId = summary.channel.id,
+                            )
+                            onChannelSelected(summary.channel.id)
+                        },
+                        onLongClick = {
+                            viewModel.toggleFavorite(summary.channel.id, summary.isFavorite)
+                        },
                     )
                 }
             }

@@ -2,52 +2,100 @@ package com.worldtv.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.worldtv.feature.catalog.BrowseScreen
+import com.worldtv.feature.catalog.HomeScreen
+import com.worldtv.feature.catalog.SearchScreen
+import com.worldtv.feature.favorites.FavoritesScreen
 import com.worldtv.feature.player.PlayerScreen
+import com.worldtv.feature.radio.RadioScreen
 import com.worldtv.feature.settings.SettingsScreen
 
 /**
  * Navigation graph.
  *
- * Kept deliberately flat — three destinations, no nesting. Backing out of four levels
- * with a remote is punishing, and the architecture doc caps depth at three for that
- * reason.
+ * Flat by design: every destination is one hop from Home, so nothing is ever more
+ * than two BACK presses from the start. Backing out of four levels with a remote is
+ * punishing, and the architecture doc caps depth at three for that reason.
  */
 object Routes {
-    const val BROWSE = "browse"
-    const val PLAYER = "player/{channelId}"
+    const val HOME = "home"
+    const val BROWSE = "browse?country={country}"
+    const val SEARCH = "search"
+    const val RADIO = "radio"
+    const val FAVORITES = "favorites"
     const val SETTINGS = "settings"
+    const val PLAYER = "player/{channelId}"
+
+    fun browse(country: String? = null): String =
+        if (country == null) "browse" else "browse?country=$country"
 
     fun player(channelId: String) = "player/$channelId"
 }
 
 @Composable
 fun WorldTvNavHost(navController: NavHostController = rememberNavController()) {
-    NavHost(navController = navController, startDestination = Routes.BROWSE) {
-        composable(Routes.BROWSE) {
-            BrowseScreen(
-                onChannelSelected = { channelId ->
-                    navController.navigate(Routes.player(channelId))
-                },
-                onToggleFavorite = { /* handled by the card's long-press in the VM */ },
+    val toPlayer: (String) -> Unit = { channelId ->
+        navController.navigate(Routes.player(channelId))
+    }
+
+    NavHost(navController = navController, startDestination = Routes.HOME) {
+        composable(Routes.HOME) {
+            HomeScreen(
+                onChannelSelected = toPlayer,
+                onBrowse = { navController.navigate(Routes.browse()) },
+                onSearch = { navController.navigate(Routes.SEARCH) },
+                onRadio = { navController.navigate(Routes.RADIO) },
+                onSettings = { navController.navigate(Routes.SETTINGS) },
+                onCountrySelected = { code -> navController.navigate(Routes.browse(code)) },
             )
         }
 
-        composable(Routes.PLAYER) { entry ->
-            val channelId = entry.arguments?.getString("channelId").orEmpty()
-            PlayerScreen(
-                channelId = channelId,
-                onBack = { navController.popBackStack() },
-                onOpenChannelList = { navController.popBackStack() },
-                onZap = { /* wired to the channel list in a later phase */ },
+        composable(
+            route = Routes.BROWSE,
+            arguments = listOf(
+                navArgument("country") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { entry ->
+            BrowseScreen(
+                initialCountry = entry.arguments?.getString("country"),
+                onChannelSelected = toPlayer,
             )
+        }
+
+        composable(Routes.SEARCH) {
+            SearchScreen(onChannelSelected = toPlayer)
+        }
+
+        composable(Routes.RADIO) {
+            RadioScreen()
+        }
+
+        composable(Routes.FAVORITES) {
+            FavoritesScreen(onChannelSelected = toPlayer)
         }
 
         composable(Routes.SETTINGS) {
             SettingsScreen()
+        }
+
+        composable(
+            route = Routes.PLAYER,
+            arguments = listOf(navArgument("channelId") { type = NavType.StringType }),
+        ) { entry ->
+            PlayerScreen(
+                channelId = entry.arguments?.getString("channelId").orEmpty(),
+                // BACK from the player returns to the list, never out of the app.
+                onBack = { navController.popBackStack() },
+            )
         }
     }
 }

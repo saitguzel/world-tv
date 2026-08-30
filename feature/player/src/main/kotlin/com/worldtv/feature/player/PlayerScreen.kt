@@ -3,6 +3,8 @@ package com.worldtv.feature.player
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
@@ -45,12 +47,11 @@ import com.worldtv.core.designsystem.theme.WorldTvColors
 fun PlayerScreen(
     channelId: String,
     onBack: () -> Unit,
-    onOpenChannelList: () -> Unit,
-    onZap: (Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlayerViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val queue by viewModel.queue.collectAsStateWithLifecycle()
     val overlayFocus = remember { FocusRequester() }
     val containerFocus = remember { FocusRequester() }
     val repeatLimiter = rememberKeyRepeatLimiter()
@@ -91,17 +92,27 @@ fun PlayerScreen(
                 if (!repeatLimiter.accept(event.nativeKeyEvent.repeatCount)) {
                     return@onPreviewKeyEvent true
                 }
+                // While the drawer or overlay is open, its own focusable content
+                // owns the D-pad; intercepting here would steal navigation from it.
+                if (state.showChannelDrawer || state.showOverlay) {
+                    return@onPreviewKeyEvent when (event.toRemoteKey()) {
+                        RemoteKey.Back -> {
+                            if (state.showChannelDrawer) viewModel.closeChannelDrawer()
+                            else viewModel.hideOverlay()
+                            true
+                        }
+                        else -> false
+                    }
+                }
                 when (event.toRemoteKey()) {
-                    RemoteKey.Up, RemoteKey.ChannelUp -> { onZap(+1); true }
-                    RemoteKey.Down, RemoteKey.ChannelDown -> { onZap(-1); true }
-                    RemoteKey.Left, RemoteKey.Right -> { onOpenChannelList(); true }
+                    RemoteKey.Up, RemoteKey.ChannelUp -> { viewModel.zap(+1); true }
+                    RemoteKey.Down, RemoteKey.ChannelDown -> { viewModel.zap(-1); true }
+                    RemoteKey.Left, RemoteKey.Right -> { viewModel.openChannelDrawer(); true }
                     RemoteKey.Select -> { viewModel.toggleOverlay(); true }
                     RemoteKey.LongSelect -> { viewModel.toggleFavorite(); true }
                     RemoteKey.Back -> {
-                        // BACK closes the overlay first and only then leaves the
-                        // player. Exiting straight to the list from an open overlay
-                        // is the most common complaint about TV players.
-                        if (state.showOverlay) viewModel.hideOverlay() else onBack()
+                        // BACK returns to the list rather than leaving the app.
+                        onBack()
                         true
                     }
                     else -> false
@@ -123,6 +134,21 @@ fun PlayerScreen(
         }
 
         AnimatedVisibility(
+            visible = state.showChannelDrawer,
+            enter = slideInHorizontally { it },
+            exit = slideOutHorizontally { it },
+            modifier = Modifier.align(Alignment.CenterEnd),
+        ) {
+            val drawerChannels by viewModel.drawerChannels.collectAsStateWithLifecycle()
+            ChannelDrawer(
+                channels = drawerChannels,
+                currentChannelId = queue.currentId ?: state.channel?.id,
+                onSelect = viewModel::jumpTo,
+                onDismiss = viewModel::closeChannelDrawer,
+            )
+        }
+
+        AnimatedVisibility(
             visible = state.showChannelCard,
             enter = fadeIn(),
             exit = fadeOut(),
@@ -140,7 +166,7 @@ fun PlayerScreen(
             PlayerControls(
                 state = state,
                 onToggleFavorite = viewModel::toggleFavorite,
-                onOpenChannelList = onOpenChannelList,
+                onOpenChannelList = viewModel::openChannelDrawer,
                 modifier = Modifier.focusRequester(overlayFocus),
             )
         }

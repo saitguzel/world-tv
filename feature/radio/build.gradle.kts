@@ -52,6 +52,8 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.androidx.media3.session)
+    // MediaController.buildAsync returns a Guava ListenableFuture.
+    implementation(libs.guava)
     implementation(libs.androidx.media3.datasource.okhttp)
     implementation(libs.okhttp)
 }

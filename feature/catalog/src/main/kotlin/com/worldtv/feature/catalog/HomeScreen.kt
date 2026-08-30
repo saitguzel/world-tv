@@ -1,0 +1,139 @@
+package com.worldtv.feature.catalog
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusGroup
+import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.tv.material3.Button
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
+import com.worldtv.core.designsystem.component.ChannelCard
+import com.worldtv.core.designsystem.component.LoadingState
+import com.worldtv.core.designsystem.component.TvShelf
+import com.worldtv.core.designsystem.theme.WorldTvColors
+import com.worldtv.core.designsystem.theme.WorldTvDimens
+import com.worldtv.core.model.ChannelSummary
+
+/**
+ * The landing screen: a mode row, then "continue watching", favourites, and the
+ * countries with the most live channels.
+ *
+ * At most a handful of actions are on screen at once — every one of them costs D-pad
+ * presses to reach, so a dense home screen is a slow one.
+ */
+@Composable
+fun HomeScreen(
+    onChannelSelected: (String) -> Unit,
+    onBrowse: () -> Unit,
+    onSearch: () -> Unit,
+    onRadio: () -> Unit,
+    onSettings: () -> Unit,
+    onCountrySelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.recents.size, state.favorites.size) { viewModel.verifyVisibleRows() }
+
+    if (state.isEmpty) {
+        LoadingState(message = "Katalog ilk kez indiriliyor…", modifier = modifier)
+        return
+    }
+
+    LazyColumn(
+        modifier
+            .fillMaxSize()
+            .focusRestorer()
+            .focusGroup(),
+        verticalArrangement = Arrangement.spacedBy(28.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            vertical = WorldTvDimens.ScreenPadding,
+        ),
+    ) {
+        item {
+            Row(
+                Modifier
+                    .padding(horizontal = WorldTvDimens.ScreenPadding)
+                    .focusGroup(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Button(onClick = onBrowse) { Text("TV") }
+                Button(onClick = onRadio) { Text("Radyo") }
+                Button(onClick = onSearch) { Text("Ara") }
+                Button(onClick = onSettings) { Text("Ayarlar") }
+            }
+        }
+
+        if (state.recents.isNotEmpty()) {
+            shelf("Devam et", state.recents, viewModel, onChannelSelected)
+        }
+        if (state.favorites.isNotEmpty()) {
+            shelf("Favoriler", state.favorites, viewModel, onChannelSelected)
+        }
+
+        if (state.countries.isNotEmpty()) {
+            item {
+                SectionTitle("Ülkeler")
+                TvShelf(Modifier.height(72.dp)) {
+                    items(state.countries, key = { it.code }) { country ->
+                        Button(onClick = { onCountrySelected(country.code) }) {
+                            Text("${country.flag} ${country.name} · ${country.channelCount}")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.shelf(
+    title: String,
+    channels: List<ChannelSummary>,
+    viewModel: HomeViewModel,
+    onChannelSelected: (String) -> Unit,
+) {
+    item {
+        SectionTitle(title)
+        TvShelf(Modifier.height(WorldTvDimens.CardHeight + 24.dp)) {
+            items(channels, key = { it.channel.id }) { summary ->
+                ChannelCard(
+                    state = summary.toCardState(),
+                    onClick = {
+                        // The row the user picked from becomes the zap queue.
+                        viewModel.onChannelOpened(channels, summary.channel.id)
+                        onChannelSelected(summary.channel.id)
+                    },
+                    modifier = Modifier.size(WorldTvDimens.CardWidth, WorldTvDimens.CardHeight),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleLarge,
+        color = WorldTvColors.OnSurface,
+        modifier = Modifier.padding(
+            start = WorldTvDimens.ScreenPadding,
+            bottom = 12.dp,
+        ),
+    )
+}

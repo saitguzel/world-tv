@@ -23,7 +23,11 @@ import kotlinx.coroutines.launch
 class RadioViewModel @Inject constructor(
     private val radioRepository: RadioRepository,
     private val favoritesRepository: FavoritesRepository,
+    private val controller: RadioController,
 ) : ViewModel() {
+
+    val nowPlaying: StateFlow<RadioStation?> = controller.nowPlaying
+    val isPlaying: StateFlow<Boolean> = controller.isPlaying
 
     private val _country = MutableStateFlow<String?>(null)
     val country: StateFlow<String?> = _country.asStateFlow()
@@ -49,9 +53,19 @@ class RadioViewModel @Inject constructor(
         }
     }
 
-    fun recordListen(uuid: String) {
+    fun play(station: RadioStation) {
+        controller.play(station)
         viewModelScope.launch {
-            favoritesRepository.recordWatch(uuid, FavoritesRepository.Kind.RADIO)
+            favoritesRepository.recordWatch(station.uuid, FavoritesRepository.Kind.RADIO)
         }
+    }
+
+    fun togglePlayPause() = controller.togglePlayPause()
+
+    override fun onCleared() {
+        // The controller is released, but playback is not stopped: leaving the radio
+        // screen must not silence the radio — that is the whole point of the mode.
+        controller.release()
+        super.onCleared()
     }
 }

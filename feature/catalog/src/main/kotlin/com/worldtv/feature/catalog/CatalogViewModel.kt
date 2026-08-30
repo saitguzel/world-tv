@@ -7,7 +7,9 @@ import androidx.paging.cachedIn
 import com.worldtv.core.model.ChannelSummary
 import com.worldtv.core.model.Country
 import com.worldtv.data.repository.ChannelRepository
+import com.worldtv.data.repository.FavoritesRepository
 import com.worldtv.data.repository.HealthRepository
+import com.worldtv.data.repository.PlaybackQueueHolder
 import com.worldtv.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -29,6 +31,8 @@ class CatalogViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val healthRepository: HealthRepository,
     private val preferences: UserPreferencesRepository,
+    private val playbackQueue: PlaybackQueueHolder,
+    private val favoritesRepository: FavoritesRepository,
 ) : ViewModel() {
 
     private val _filter = MutableStateFlow(CatalogFilter())
@@ -60,6 +64,25 @@ class CatalogViewModel @Inject constructor(
      */
     fun onChannelsVisible(channelIds: List<String>) {
         healthRepository.verifyVisibleChannels(viewModelScope, channelIds)
+    }
+
+    /**
+     * Hands the player the list the user is actually looking at, so up/down zaps
+     * through this country or category rather than through the whole catalog.
+     */
+    fun onChannelOpened(channelIds: List<String>, startId: String) {
+        playbackQueue.setQueue(channelIds, startId)
+    }
+
+    /** Long-press on a card. */
+    fun toggleFavorite(channelId: String, currentlyFavorite: Boolean) {
+        viewModelScope.launch {
+            favoritesRepository.toggle(
+                channelId,
+                FavoritesRepository.Kind.CHANNEL,
+                currentlyFavorite,
+            )
+        }
     }
 
     fun rememberHomeCountry(code: String) {

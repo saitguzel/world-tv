@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
@@ -98,6 +99,18 @@ class ChannelRepository @Inject constructor(
      */
     suspend fun streamsFor(channelId: String): List<Stream> = withContext(io) {
         streamDao.playableStreams(channelId).map(StreamEntity::toModel)
+    }
+
+    /**
+     * Summaries for the given ids, returned in the order requested rather than the
+     * order SQLite happened to produce.
+     */
+    fun summaries(ids: List<String>): Flow<List<ChannelSummary>> {
+        if (ids.isEmpty()) return flowOf(emptyList())
+        return channelDao.summariesByIds(ids).map { rows ->
+            val byId = rows.associateBy { it.id }
+            ids.mapNotNull { id -> byId[id]?.toSummary() }
+        }
     }
 
     suspend fun channel(id: String): Channel? = withContext(io) {

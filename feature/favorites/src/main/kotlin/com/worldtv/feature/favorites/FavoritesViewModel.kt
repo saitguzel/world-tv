@@ -6,6 +6,7 @@ import com.worldtv.core.model.ChannelSummary
 import com.worldtv.data.repository.ChannelRepository
 import com.worldtv.data.repository.FavoritesRepository
 import com.worldtv.data.repository.HealthRepository
+import com.worldtv.data.repository.PlaybackQueueHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,6 +19,7 @@ class FavoritesViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val favoritesRepository: FavoritesRepository,
     private val healthRepository: HealthRepository,
+    private val playbackQueue: PlaybackQueueHolder,
 ) : ViewModel() {
 
     val favorites: StateFlow<List<ChannelSummary>> = channelRepository.favorites()
@@ -34,6 +36,11 @@ class FavoritesViewModel @Inject constructor(
                 currentlyFavorite,
             )
         }
+    }
+
+    /** Zapping from a favourite walks the favourites list, not the whole catalog. */
+    fun onChannelOpened(startId: String) {
+        playbackQueue.setQueue(favorites.value.map { it.channel.id }, startId)
     }
 
     /** Explicit refresh: favourites get the full two-tier check, on demand. */
