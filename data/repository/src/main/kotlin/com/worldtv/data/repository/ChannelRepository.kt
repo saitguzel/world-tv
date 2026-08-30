@@ -8,10 +8,12 @@ import com.worldtv.core.common.di.IoDispatcher
 import com.worldtv.core.database.dao.ChannelDao
 import com.worldtv.core.database.dao.ChannelWithHealth
 import com.worldtv.core.database.dao.StreamDao
+import com.worldtv.core.database.dao.UserDataDao
 import com.worldtv.core.database.entity.StreamEntity
 import com.worldtv.core.database.entity.toModel
 import com.worldtv.core.model.Channel
 import com.worldtv.core.model.ChannelSummary
+import com.worldtv.core.model.Category
 import com.worldtv.core.model.Country
 import com.worldtv.core.model.Stream
 import com.worldtv.core.model.StreamKind
@@ -30,6 +32,7 @@ import kotlinx.coroutines.withContext
 class ChannelRepository @Inject constructor(
     private val channelDao: ChannelDao,
     private val streamDao: StreamDao,
+    private val userDataDao: UserDataDao,
     private val preferences: UserPreferencesRepository,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) {
@@ -62,6 +65,10 @@ class ChannelRepository @Inject constructor(
 
     fun recents(limit: Int = 20): Flow<List<ChannelSummary>> =
         channelDao.recentChannels(limit).map { rows -> rows.map(ChannelWithHealth::toSummary) }
+
+    fun categories(): Flow<List<Category>> = userDataDao.categories().map { rows ->
+        rows.map { Category(id = it.id, name = it.name) }
+    }
 
     fun countries(): Flow<List<Country>> = channelDao.countriesWithCounts().map { rows ->
         rows.map { row ->

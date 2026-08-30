@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.worldtv.core.model.ChannelSummary
+import com.worldtv.core.model.Category
 import com.worldtv.core.model.Country
 import com.worldtv.core.model.Programme
 import com.worldtv.data.repository.ChannelRepository
@@ -79,6 +80,9 @@ class CatalogViewModel @Inject constructor(
     val filter: StateFlow<CatalogFilter> = _filter.asStateFlow()
 
     val countries: StateFlow<List<Country>> = channelRepository.countries()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val categories: StateFlow<List<Category>> = channelRepository.categories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)

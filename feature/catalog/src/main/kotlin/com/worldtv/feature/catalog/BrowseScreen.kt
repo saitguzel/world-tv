@@ -39,6 +39,7 @@ fun BrowseScreen(
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
     val countries by viewModel.countries.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     val channels = viewModel.channels.collectAsLazyPagingItems()
     val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
@@ -82,11 +83,14 @@ fun BrowseScreen(
         Row(Modifier.fillMaxSize()) {
             CountryDrawer(
                 countries = countries,
+                categories = categories,
                 selectedCountry = filter.country,
+                selectedCategory = filter.category,
                 onCountrySelected = { code ->
                     viewModel.setCountry(code)
                     viewModel.rememberHomeCountry(code)
                 },
+                onCategorySelected = viewModel::setCategory,
             )
 
             val isInitialLoad =

@@ -15,6 +15,3 @@ data class Category(
     val name: String,
     val channelCount: Int = 0,
 )
-
-/** Top-level mode of the app. */
-enum class MediaMode { TV, RADIO }

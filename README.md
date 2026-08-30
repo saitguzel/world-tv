@@ -30,13 +30,17 @@ Mimari incelemesi ve dokümandan sapmaların gerekçeleri:
 
 Android SDK 36 ve JDK 17 gerekir.
 
+CI (`.github/workflows/ci.yml`) iki iş çalıştırıyor: birim testleri ve
+`assembleDebug` + lint. İkincisi, bu depo yazılırken doğrulanamayan tek şeyi —
+Room/KSP, Hilt ve Compose kod üretimini — kapsıyor.
+
 ## Ekranlar
 
 ```
 Home        Mod satırı · Devam et · Favoriler · Öne çıkan ülkeler
-Browse      Kalıcı ülke çekmecesi + kanal ızgarası (paging)
-Search      Sesli arama → kademeli filtreleme → alfabetik ızgara klavye
-Player      Tam ekran · zap (yukarı/aşağı) · yan kanal çekmecesi (sağ/sol)
+Browse      Ülke/kategori çekmecesi + kanal ızgarası (paging) + odak önizlemesi
+Search      Son aramalar · sık izlenenler · sesli arama · alfabetik ızgara klavye
+Player      Tam ekran · zap · kanal çekmecesi · altyazı/ses seçimi · şimdi/sıradaki
 Favorites   Favori ızgarası, uzun basma ile çıkarma
 Radio       Ülke çekmecesi + istasyon listesi, MediaSessionService ile arka planda çalma
 Settings    Filtreler · sağlık yoğunluğu · önizleme · katalogu yenile
