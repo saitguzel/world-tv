@@ -6,6 +6,7 @@ import com.worldtv.core.database.dao.ChannelDao
 import com.worldtv.core.database.dao.RadioDao
 import com.worldtv.core.database.dao.StreamDao
 import com.worldtv.core.database.dao.UserDataDao
+import com.worldtv.core.database.dao.YouTubeDao
 import com.worldtv.core.database.entity.BlocklistEntity
 import com.worldtv.core.database.entity.CategoryEntity
 import com.worldtv.core.database.entity.ChannelEntity
@@ -40,6 +41,7 @@ abstract class WorldTvDatabase : RoomDatabase() {
     abstract fun streamDao(): StreamDao
     abstract fun radioDao(): RadioDao
     abstract fun userDataDao(): UserDataDao
+    abstract fun youTubeDao(): YouTubeDao
 
     companion object {
         const val NAME = "worldtv.db"

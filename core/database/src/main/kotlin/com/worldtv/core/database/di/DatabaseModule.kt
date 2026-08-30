@@ -7,6 +7,7 @@ import com.worldtv.core.database.dao.ChannelDao
 import com.worldtv.core.database.dao.RadioDao
 import com.worldtv.core.database.dao.StreamDao
 import com.worldtv.core.database.dao.UserDataDao
+import com.worldtv.core.database.dao.YouTubeDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,4 +37,6 @@ object DatabaseModule {
     @Provides fun provideRadioDao(db: WorldTvDatabase): RadioDao = db.radioDao()
 
     @Provides fun provideUserDataDao(db: WorldTvDatabase): UserDataDao = db.userDataDao()
+
+    @Provides fun provideYouTubeDao(db: WorldTvDatabase): YouTubeDao = db.youTubeDao()
 }

@@ -2,6 +2,7 @@ package com.worldtv.core.network.di
 
 import com.worldtv.core.network.api.IptvOrgApi
 import com.worldtv.core.network.api.RadioBrowserApi
+import com.worldtv.core.network.api.YouTubeApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -109,6 +110,16 @@ object NetworkModule {
             .addConverterFactory(json.asConverterFactory(JSON_MEDIA_TYPE))
             .build()
             .create(RadioBrowserApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideYouTubeApi(@ApiClient client: OkHttpClient, json: Json): YouTubeApi =
+        Retrofit.Builder()
+            .baseUrl(YouTubeApi.BASE_URL)
+            .callFactory(Call.Factory { request -> client.newCall(request) })
+            .addConverterFactory(json.asConverterFactory(JSON_MEDIA_TYPE))
+            .build()
+            .create(YouTubeApi::class.java)
 
     private val JSON_MEDIA_TYPE = "application/json".toMediaType()
 }

@@ -50,6 +50,8 @@ data class UserPreferences(
     val lastMode: String = "TV",
     val healthAggressiveness: HealthAggressiveness = HealthAggressiveness.BALANCED,
     val reduceMotion: Boolean = false,
+    /** User-supplied YouTube Data API key; null disables YouTube mode. */
+    val youTubeApiKey: String? = null,
 )
 
 @Singleton
@@ -67,6 +69,7 @@ class UserPreferencesRepository @Inject constructor(
                 ?.let { runCatching { HealthAggressiveness.valueOf(it) }.getOrNull() }
                 ?: HealthAggressiveness.BALANCED,
             reduceMotion = prefs[REDUCE_MOTION] ?: false,
+            youTubeApiKey = prefs[YOUTUBE_API_KEY],
         )
     }
 
@@ -87,6 +90,8 @@ class UserPreferencesRepository @Inject constructor(
 
     suspend fun setReduceMotion(value: Boolean) = edit { it[REDUCE_MOTION] = value }
 
+    suspend fun setYouTubeApiKey(value: String) = edit { it[YOUTUBE_API_KEY] = value.trim() }
+
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
         context.dataStore.edit(block)
     }
@@ -99,5 +104,6 @@ class UserPreferencesRepository @Inject constructor(
         val LAST_MODE = stringPreferencesKey("last_mode")
         val HEALTH_AGGRESSIVENESS = stringPreferencesKey("health_aggressiveness")
         val REDUCE_MOTION = booleanPreferencesKey("reduce_motion")
+        val YOUTUBE_API_KEY = stringPreferencesKey("youtube_api_key")
     }
 }

@@ -9,6 +9,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusGroup
 import androidx.compose.ui.focus.focusRestorer
@@ -29,6 +32,20 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var editingApiKey by remember { mutableStateOf(false) }
+
+    if (editingApiKey) {
+        ApiKeyEntry(
+            initialValue = state.preferences.youTubeApiKey.orEmpty(),
+            onSave = { key ->
+                viewModel.setYouTubeApiKey(key)
+                editingApiKey = false
+            },
+            onCancel = { editingApiKey = false },
+            modifier = Modifier.padding(WorldTvDimens.ScreenPadding),
+        )
+        return
+    }
 
     LazyColumn(
         modifier
@@ -89,6 +106,23 @@ fun SettingsScreen(
                             "Yenileniyor…"
                         } else {
                             "Değişmemiş dosyalar tekrar indirilmez"
+                        },
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            ListItem(
+                selected = false,
+                onClick = { editingApiKey = true },
+                headlineContent = { Text("YouTube Data API anahtarı") },
+                supportingContent = {
+                    Text(
+                        if (state.preferences.youTubeApiKey.isNullOrBlank()) {
+                            "Ayarlanmadı — YouTube modu kapalı"
+                        } else {
+                            "Ayarlandı"
                         },
                     )
                 },
