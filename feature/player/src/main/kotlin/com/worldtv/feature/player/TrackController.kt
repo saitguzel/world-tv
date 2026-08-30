@@ -26,7 +26,14 @@ object TrackController {
      * Unsupported formats are dropped: offering a track the device cannot decode
      * produces a failure the user reads as the channel being broken.
      */
-    fun optionsOf(tracks: Tracks, type: TrackType): List<MediaTrack> {
+    fun optionsOf(
+        tracks: Tracks,
+        type: TrackType,
+        /** Wording for a track whose language tag says nothing. Supplied by the UI. */
+        unknownLabel: String,
+        /** Wording for the synthetic "subtitles off" entry. Supplied by the UI. */
+        offLabel: String,
+    ): List<MediaTrack> {
         val c3Type = type.toC3()
         val options = mutableListOf<MediaTrack>()
 
@@ -40,7 +47,8 @@ object TrackController {
                     type = type,
                     language = format.language,
                     label = format.label
-                        ?: TrackPreferences.labelFor(format.language),
+                        ?: TrackPreferences.labelFor(format.language)
+                        ?: unknownLabel,
                     isSelected = group.isTrackSelected(formatIndex),
                 )
             }
@@ -54,7 +62,7 @@ object TrackController {
                     id = OFF_ID,
                     type = TrackType.TEXT,
                     language = null,
-                    label = "Kapalı",
+                    label = offLabel,
                     isSelected = options.none { it.isSelected },
                     isOff = true,
                 ),

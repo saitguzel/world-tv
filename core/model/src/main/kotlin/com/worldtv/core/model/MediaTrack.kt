@@ -83,13 +83,15 @@ object TrackPreferences {
     )
 
     /**
-     * A human label for a language tag.
+     * A human label for a language tag, or null when the tag says nothing useful.
      *
-     * Falls back to the raw tag rather than "Unknown": on a stream tagged `mul` or
-     * `qaa`, showing the tag at least tells the user the tracks differ.
+     * Returns the raw tag rather than inventing a word for it: on a stream tagged
+     * `mul` or `qaa`, showing the tag at least tells the user the tracks differ.
+     * Null means "no label at all" — the UI supplies its own wording for that, since
+     * this module is plain Kotlin and has no resources.
      */
-    fun labelFor(tag: String?, displayLocale: Locale = Locale.getDefault()): String {
-        if (tag.isNullOrBlank()) return "Bilinmeyen"
+    fun labelFor(tag: String?, displayLocale: Locale = Locale.getDefault()): String? {
+        if (tag.isNullOrBlank()) return null
         val locale = Locale.forLanguageTag(tag.replace('_', '-'))
         val display = locale.getDisplayLanguage(displayLocale)
         return display.takeIf { it.isNotBlank() && !it.equals(tag, ignoreCase = true) } ?: tag

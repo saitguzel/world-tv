@@ -20,6 +20,8 @@ import com.worldtv.core.designsystem.component.TvChannelGrid
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.core.model.ChannelSummary
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.favorites.R
 
 @Composable
 fun FavoritesScreen(
@@ -31,9 +33,8 @@ fun FavoritesScreen(
 
     if (favorites.isEmpty()) {
         EmptyState(
-            message = "Henüz favori kanalınız yok.\n" +
-                "Bir kanala uzun basarak favorilere ekleyebilirsiniz.",
-            actionLabel = "Favorileri kontrol et",
+            message = stringResource(R.string.favorites_empty),
+            actionLabel = stringResource(R.string.favorites_check),
             onAction = viewModel::refreshFavoriteHealth,
             modifier = modifier,
         )
@@ -42,7 +43,7 @@ fun FavoritesScreen(
 
     Column(modifier.fillMaxSize()) {
         Text(
-            text = "Favoriler",
+            text = stringResource(R.string.favorites_title),
             style = MaterialTheme.typography.headlineLarge,
             color = WorldTvColors.OnSurface,
             modifier = Modifier.padding(

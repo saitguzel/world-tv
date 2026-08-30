@@ -24,6 +24,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.model.MediaTrack
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.player.R
 
 /**
  * Subtitle and audio track picker.
@@ -61,7 +63,7 @@ fun TrackPicker(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             if (subtitleTracks.isNotEmpty()) {
-                item { SectionLabel("Altyazı") }
+                item { SectionLabel(stringResource(R.string.tracks_subtitles)) }
                 items(subtitleTracks, key = { "text-" + it.id }) { track ->
                     TrackRow(track, onSelect)
                 }
@@ -69,7 +71,7 @@ fun TrackPicker(
             // Only shown when there is a genuine choice; a single audio track is not
             // a decision worth putting in front of anyone.
             if (audioTracks.size > 1) {
-                item { SectionLabel("Ses") }
+                item { SectionLabel(stringResource(R.string.tracks_audio)) }
                 items(audioTracks, key = { "audio-" + it.id }) { track ->
                     TrackRow(track, onSelect)
                 }
@@ -77,7 +79,7 @@ fun TrackPicker(
             if (subtitleTracks.isEmpty() && audioTracks.size <= 1) {
                 item {
                     Text(
-                        text = "Bu yayında seçilebilir altyazı veya ses parçası yok",
+                        text = stringResource(R.string.tracks_none),
                         style = MaterialTheme.typography.bodyLarge,
                         color = WorldTvColors.OnSurfaceMuted,
                     )

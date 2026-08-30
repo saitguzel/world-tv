@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.catalog.R
 
 /**
  * An on-screen keyboard laid out as an alphabetical grid.
@@ -81,13 +83,13 @@ fun GridKeyboard(
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { onCharacter(' ') }, modifier = Modifier.width(120.dp)) {
-                Text("Boşluk")
+                Text(stringResource(R.string.keyboard_space))
             }
             Button(onClick = onBackspace, modifier = Modifier.width(100.dp)) {
-                Text("Sil")
+                Text(stringResource(R.string.keyboard_delete))
             }
             Button(onClick = onClear, modifier = Modifier.width(100.dp)) {
-                Text("Temizle")
+                Text(stringResource(R.string.keyboard_clear))
             }
         }
     }

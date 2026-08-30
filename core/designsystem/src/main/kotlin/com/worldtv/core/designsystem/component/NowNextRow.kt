@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.worldtv.core.designsystem.R
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.model.Programme
 
@@ -93,7 +95,7 @@ fun NowNextBlock(
         }
         next?.let { programme ->
             Text(
-                text = "Sıradaki: ${programme.title}",
+                text = stringResource(R.string.programme_next, programme.title),
                 style = MaterialTheme.typography.labelLarge,
                 color = WorldTvColors.OnSurfaceMuted,
                 maxLines = 1,

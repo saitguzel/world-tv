@@ -30,6 +30,8 @@ import com.worldtv.core.designsystem.component.TvShelf
 import com.worldtv.core.model.ChannelSummary
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.catalog.R
 
 /**
  * Search.
@@ -72,7 +74,7 @@ fun SearchScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = query.ifBlank { "Kanal ara" },
+                text = query.ifBlank { stringResource(R.string.search_hint) },
                 style = MaterialTheme.typography.headlineMedium,
                 color = if (query.isBlank()) {
                     WorldTvColors.OnSurfaceMuted
@@ -93,7 +95,7 @@ fun SearchScreen(
                     )
                 },
             ) {
-                Text("Sesle ara")
+                Text(stringResource(R.string.search_voice))
             }
 
             GridKeyboard(
@@ -109,7 +111,7 @@ fun SearchScreen(
             // searches on a TV end in a click here rather than in typing.
             if (query.isBlank()) {
                 if (recentSearches.isNotEmpty()) {
-                    SectionHeading("Son aramalar")
+                    SectionHeading(stringResource(R.string.search_recent))
                     RecentSearchRow(
                         searches = recentSearches,
                         onSelect = viewModel::setQuery,
@@ -117,12 +119,12 @@ fun SearchScreen(
                     )
                 }
                 if (popularChannels.isNotEmpty()) {
-                    SectionHeading("Sık izlenenler")
+                    SectionHeading(stringResource(R.string.search_popular))
                     ResultGrid(popularChannels, viewModel, onChannelSelected)
                 }
                 if (recentSearches.isEmpty() && popularChannels.isEmpty()) {
                     Text(
-                        text = "Aramaya başlayın",
+                        text = stringResource(R.string.search_start),
                         style = MaterialTheme.typography.titleLarge,
                         color = WorldTvColors.OnSurfaceMuted,
                         modifier = Modifier.padding(24.dp),
@@ -133,7 +135,7 @@ fun SearchScreen(
 
             if (results.isEmpty()) {
                 Text(
-                    text = "Sonuç yok",
+                    text = stringResource(R.string.search_no_results),
                     style = MaterialTheme.typography.titleLarge,
                     color = WorldTvColors.OnSurfaceMuted,
                     modifier = Modifier.padding(24.dp),
@@ -191,7 +193,7 @@ private fun RecentSearchRow(
             Button(onClick = { onSelect(search) }) { Text(search) }
         }
         item {
-            Button(onClick = onClear) { Text("Temizle") }
+            Button(onClick = onClear) { Text(stringResource(R.string.keyboard_clear)) }
         }
     }
 }

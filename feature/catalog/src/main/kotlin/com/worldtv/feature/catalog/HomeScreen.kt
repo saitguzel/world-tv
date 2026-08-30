@@ -32,6 +32,9 @@ import com.worldtv.core.designsystem.component.TvShelf
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.core.model.ChannelSummary
+import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
+import com.worldtv.feature.catalog.R
 
 /**
  * The landing screen: a mode row, then "continue watching", favourites, and the
@@ -75,13 +78,14 @@ fun HomeScreen(
     if (state.isEmpty) {
         val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
         if (isSyncing) {
-            LoadingState(message = "Katalog ilk kez indiriliyor…", modifier = modifier)
+            LoadingState(message = stringResource(R.string.home_catalog_downloading),
+                modifier = modifier,)
         } else {
             // A failed first sync must leave something focusable on screen, or the
             // remote does nothing and the app looks broken rather than empty.
             EmptyState(
-                message = "Katalog henüz indirilmedi.",
-                actionLabel = "Şimdi indir",
+                message = stringResource(R.string.home_catalog_missing),
+                actionLabel = stringResource(R.string.home_download_now),
                 onAction = viewModel::retrySync,
                 modifier = modifier,
             )
@@ -102,7 +106,7 @@ fun HomeScreen(
         if (showExitPrompt) {
             item {
                 Text(
-                    text = "Çıkmak için tekrar geri tuşuna basın",
+                    text = stringResource(R.string.home_exit_confirm),
                     style = MaterialTheme.typography.bodyLarge,
                     color = WorldTvColors.OnSurfaceMuted,
                     modifier = Modifier.padding(horizontal = WorldTvDimens.ScreenPadding),
@@ -117,28 +121,35 @@ fun HomeScreen(
                     .focusGroup(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Button(onClick = onBrowse) { Text("TV") }
-                Button(onClick = onRadio) { Text("Radyo") }
-                Button(onClick = onSearch) { Text("Ara") }
-                Button(onClick = onFavorites) { Text("Favoriler") }
-                Button(onClick = onSettings) { Text("Ayarlar") }
+                Button(onClick = onBrowse) { Text(stringResource(R.string.mode_tv)) }
+                Button(onClick = onRadio) { Text(stringResource(R.string.mode_radio)) }
+                Button(onClick = onSearch) { Text(stringResource(R.string.action_search)) }
+                Button(onClick = onFavorites) { Text(stringResource(R.string.action_favorites)) }
+                Button(onClick = onSettings) { Text(stringResource(R.string.action_settings)) }
             }
         }
 
         if (state.recents.isNotEmpty()) {
-            shelf("Devam et", state.recents, viewModel, onChannelSelected)
+            shelf(R.string.home_continue, state.recents, viewModel, onChannelSelected)
         }
         if (state.favorites.isNotEmpty()) {
-            shelf("Favoriler", state.favorites, viewModel, onChannelSelected)
+            shelf(R.string.home_favorites, state.favorites, viewModel, onChannelSelected)
         }
 
         if (state.countries.isNotEmpty()) {
             item {
-                SectionTitle("Ülkeler")
+                SectionTitle(stringResource(R.string.home_countries))
                 TvShelf(Modifier.height(72.dp)) {
                     items(state.countries, key = { it.code }) { country ->
                         Button(onClick = { onCountrySelected(country.code) }) {
-                            Text("${country.flag} ${country.name} · ${country.channelCount}")
+                            Text(
+                                stringResource(
+                                    R.string.country_with_count,
+                                    country.flag,
+                                    country.name,
+                                    country.channelCount,
+                                ),
+                            )
                         }
                     }
                 }
@@ -148,13 +159,13 @@ fun HomeScreen(
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.shelf(
-    title: String,
+    @StringRes titleRes: Int,
     channels: List<ChannelSummary>,
     viewModel: HomeViewModel,
     onChannelSelected: (String) -> Unit,
 ) {
     item {
-        SectionTitle(title)
+        SectionTitle(stringResource(titleRes))
         TvShelf(Modifier.height(WorldTvDimens.CardHeight + 24.dp)) {
             items(channels, key = { it.channel.id }) { summary ->
                 ChannelCard(

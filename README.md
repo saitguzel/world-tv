@@ -94,6 +94,17 @@ yürümek kart başına bir bağlantı açıp terk eder. Önizleme yalnızca `OK
 yayınları kullanıyor ve ses kod çözücü seviyesinde kapalı — sadece susturulmuş bir
 oynatıcı yine ses odağı alır ve kullanıcının dinlediği radyoyu susturur.
 
+## Metinler
+
+Arayüz metinleri, onları çizen modülün kendi `res/values/strings.xml` dosyasında —
+`nonTransitiveRClass` bunu gerektiriyor ve bir özellik modülünü kendi kendine yeterli
+tutuyor. `:app` yalnızca framework'ün ada göre okuduklarını (`app_name`, arama ipucu)
+barındırıyor.
+
+`:core:model` ve `:data:health` saf Kotlin modülleri olduğu için hiç metin içermiyor:
+dil etiketi çözümlenemediğinde `TrackPreferences.labelFor` null döndürüyor ve nasıl
+adlandırılacağına arayüz karar veriyor.
+
 ## Modüller
 
 ```

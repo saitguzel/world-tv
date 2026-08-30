@@ -34,6 +34,8 @@ import com.worldtv.core.designsystem.focus.RemoteKey
 import com.worldtv.core.designsystem.focus.rememberKeyRepeatLimiter
 import com.worldtv.core.designsystem.focus.toRemoteKey
 import com.worldtv.core.designsystem.theme.WorldTvColors
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.player.R
 
 /**
  * Full-screen player.
@@ -193,14 +195,14 @@ fun PlayerScreen(
 
         if (state.tryingAlternative && !state.unavailable) {
             StatusBanner(
-                text = "Alternatif kaynak deneniyor…",
+                text = stringResource(R.string.player_trying_alternative),
                 modifier = Modifier.align(Alignment.BottomStart).padding(48.dp),
             )
         }
 
         if (state.geoWarning && !state.isBuffering) {
             StatusBanner(
-                text = "Bu yayın bölgenizde engelli olabilir",
+                text = stringResource(R.string.player_geo_warning),
                 modifier = Modifier.align(Alignment.TopEnd).padding(48.dp),
             )
         }

@@ -26,6 +26,8 @@ import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.component.HealthDot
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.model.ChannelSummary
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.player.R
 
 /**
  * The channel list that slides in over the video.
@@ -61,7 +63,7 @@ fun ChannelDrawer(
             .padding(24.dp),
     ) {
         Text(
-            text = "Kanallar",
+            text = stringResource(R.string.player_channels),
             style = MaterialTheme.typography.titleMedium,
             color = WorldTvColors.OnSurfaceMuted,
             modifier = Modifier.padding(bottom = 12.dp),

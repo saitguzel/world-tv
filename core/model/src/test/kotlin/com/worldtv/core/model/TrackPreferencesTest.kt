@@ -80,7 +80,9 @@ class TrackPreferencesTest {
         // A stream tagged qaa tells the user nothing, but the raw tag at least shows
         // that the tracks differ.
         assertEquals("qaa", TrackPreferences.labelFor("qaa", Locale.ENGLISH))
-        assertEquals("Bilinmeyen", TrackPreferences.labelFor(null))
-        assertEquals("Bilinmeyen", TrackPreferences.labelFor("  "))
+        // Null rather than a made-up word: this module has no resources, so the UI
+        // decides how to word "no language".
+        assertNull(TrackPreferences.labelFor(null))
+        assertNull(TrackPreferences.labelFor("  "))
     }
 }

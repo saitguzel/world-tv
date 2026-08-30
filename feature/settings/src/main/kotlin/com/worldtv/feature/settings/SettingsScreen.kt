@@ -25,6 +25,9 @@ import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.data.repository.HealthAggressiveness
+import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
+import com.worldtv.feature.settings.R
 
 @Composable
 fun SettingsScreen(
@@ -42,7 +45,7 @@ fun SettingsScreen(
     ) {
         item {
             Text(
-                text = "Ayarlar",
+                text = stringResource(R.string.settings_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = WorldTvColors.OnSurface,
                 modifier = Modifier.padding(bottom = 16.dp),
@@ -51,38 +54,38 @@ fun SettingsScreen(
 
         item {
             SwitchRow(
-                title = "Yetişkin kanallarını göster",
+                title = stringResource(R.string.settings_show_nsfw),
                 checked = state.preferences.showNsfw,
                 onCheckedChange = viewModel::setShowNsfw,
             )
         }
         item {
             SwitchRow(
-                title = "Kontrol edilmemiş yayınları göster",
-                subtitle = "Kapatırsanız yalnızca doğrulanmış kanallar listelenir",
+                title = stringResource(R.string.settings_show_unchecked),
+                subtitle = stringResource(R.string.settings_show_unchecked_hint),
                 checked = state.preferences.showUnchecked,
                 onCheckedChange = viewModel::setShowUnchecked,
             )
         }
         item {
             SwitchRow(
-                title = "Bölgesel kısıtlı yayınları göster",
-                subtitle = "Bölgenizde çalışıyor olabilirler",
+                title = stringResource(R.string.settings_show_geo_blocked),
+                subtitle = stringResource(R.string.settings_show_geo_blocked_hint),
                 checked = state.preferences.showGeoBlocked,
                 onCheckedChange = viewModel::setShowGeoBlocked,
             )
         }
         item {
             SwitchRow(
-                title = "Odaklanınca önizleme",
-                subtitle = "Bir kanalda kısa süre durunca sessiz önizleme başlar",
+                title = stringResource(R.string.settings_preview),
+                subtitle = stringResource(R.string.settings_preview_hint),
                 checked = state.preferences.previewOnFocus,
                 onCheckedChange = viewModel::setPreviewOnFocus,
             )
         }
         item {
             SwitchRow(
-                title = "Animasyonları azalt",
+                title = stringResource(R.string.settings_reduce_motion),
                 checked = state.preferences.reduceMotion,
                 onCheckedChange = viewModel::setReduceMotion,
             )
@@ -92,14 +95,16 @@ fun SettingsScreen(
             ListItem(
                 selected = false,
                 onClick = viewModel::resyncCatalog,
-                headlineContent = { Text("Katalogu şimdi yenile") },
+                headlineContent = { Text(stringResource(R.string.settings_resync)) },
                 supportingContent = {
                     Text(
-                        if (state.isSyncing) {
-                            "Yenileniyor…"
-                        } else {
-                            "Değişmemiş dosyalar tekrar indirilmez"
-                        },
+                        stringResource(
+                            if (state.isSyncing) {
+                                R.string.settings_resyncing
+                            } else {
+                                R.string.settings_resync_hint
+                            },
+                        ),
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -109,9 +114,9 @@ fun SettingsScreen(
             ListItem(
                 selected = false,
                 onClick = viewModel::recheckEverything,
-                headlineContent = { Text("Tüm yayınları yeniden kontrol et") },
+                headlineContent = { Text(stringResource(R.string.settings_recheck)) },
                 supportingContent = {
-                    Text("Gizlenen yayınlar da dahil, arka planda kademeli olarak")
+                    Text(stringResource(R.string.settings_recheck_hint))
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -119,7 +124,7 @@ fun SettingsScreen(
 
         item {
             Text(
-                text = "Sağlık kontrolü yoğunluğu",
+                text = stringResource(R.string.settings_health_aggressiveness),
                 style = MaterialTheme.typography.titleMedium,
                 color = WorldTvColors.OnSurfaceMuted,
                 modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
@@ -129,8 +134,8 @@ fun SettingsScreen(
             ListItem(
                 selected = state.preferences.healthAggressiveness == level,
                 onClick = { viewModel.setAggressiveness(level) },
-                headlineContent = { Text(level.label()) },
-                supportingContent = { Text(level.description()) },
+                headlineContent = { Text(stringResource(level.labelRes())) },
+                supportingContent = { Text(stringResource(level.descriptionRes())) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -138,15 +143,16 @@ fun SettingsScreen(
         item {
             Column(Modifier.padding(top = 32.dp)) {
                 Text(
-                    text = "${state.verifiedStreams} yayın doğrulandı, " +
-                        "${state.deadStreams} yayın gizlendi",
+                    text = stringResource(
+                        R.string.settings_health_summary,
+                        state.verifiedStreams,
+                        state.deadStreams,
+                    ),
                     style = MaterialTheme.typography.bodyLarge,
                     color = WorldTvColors.OnSurfaceMuted,
                 )
                 Text(
-                    text = "WorldTV hiçbir içerik barındırmaz veya yayınlamaz. " +
-                        "Tüm yayın adresleri herkese açık iptv-org ve Radio Browser " +
-                        "dizinlerinden gelir.",
+                    text = stringResource(R.string.settings_disclaimer),
                     style = MaterialTheme.typography.labelLarge,
                     color = WorldTvColors.OnSurfaceMuted,
                     modifier = Modifier.padding(top = 12.dp),
@@ -175,14 +181,16 @@ private fun SwitchRow(
     )
 }
 
-private fun HealthAggressiveness.label(): String = when (this) {
-    HealthAggressiveness.LIGHT -> "Hafif"
-    HealthAggressiveness.BALANCED -> "Dengeli"
-    HealthAggressiveness.THOROUGH -> "Kapsamlı"
+@StringRes
+private fun HealthAggressiveness.labelRes(): Int = when (this) {
+    HealthAggressiveness.LIGHT -> R.string.settings_health_light
+    HealthAggressiveness.BALANCED -> R.string.settings_health_balanced
+    HealthAggressiveness.THOROUGH -> R.string.settings_health_thorough
 }
 
-private fun HealthAggressiveness.description(): String = when (this) {
-    HealthAggressiveness.LIGHT -> "Yalnızca hızlı kontrol, düşük veri kullanımı"
-    HealthAggressiveness.BALANCED -> "Manifest ve segment kontrolü — önerilen"
-    HealthAggressiveness.THOROUGH -> "Daha fazla eşzamanlı kontrol, güçlü cihazlar için"
+@StringRes
+private fun HealthAggressiveness.descriptionRes(): Int = when (this) {
+    HealthAggressiveness.LIGHT -> R.string.settings_health_light_hint
+    HealthAggressiveness.BALANCED -> R.string.settings_health_balanced_hint
+    HealthAggressiveness.THOROUGH -> R.string.settings_health_thorough_hint
 }

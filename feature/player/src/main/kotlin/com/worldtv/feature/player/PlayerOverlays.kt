@@ -32,6 +32,8 @@ import coil3.size.Size
 import com.worldtv.core.designsystem.component.NowNextBlock
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.model.NowNext
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.player.R
 
 /**
  * What is drawn while a channel loads.
@@ -89,7 +91,11 @@ fun ChannelInfoCard(
             }
             if (state.totalStreams > 1) {
                 Text(
-                    text = "Kaynak ${state.streamIndex + 1}/${state.totalStreams}",
+                    text = stringResource(
+                        R.string.player_source_of,
+                        state.streamIndex + 1,
+                        state.totalStreams,
+                    ),
                     style = MaterialTheme.typography.labelLarge,
                     color = WorldTvColors.OnSurfaceMuted,
                 )
@@ -138,16 +144,24 @@ fun PlayerControls(
             onClick = onToggleFavorite,
             modifier = Modifier.focusRequester(firstButton),
         ) {
-            Text(if (state.isFavorite) "Favorilerden çıkar" else "Favorilere ekle")
+            Text(
+                stringResource(
+                    if (state.isFavorite) {
+                        R.string.player_favorite_remove
+                    } else {
+                        R.string.player_favorite_add
+                    },
+                ),
+            )
         }
         Button(onClick = onOpenChannelList) {
-            Text("Kanal listesi")
+            Text(stringResource(R.string.player_channel_list))
         }
         // Hidden entirely when the stream carries nothing to choose between, rather
         // than shown disabled — a dead button still costs a D-pad press to skip.
         if (hasTrackChoices) {
             Button(onClick = onOpenTracks) {
-                Text("Altyazı ve ses")
+                Text(stringResource(R.string.player_tracks))
             }
         }
     }
@@ -171,15 +185,15 @@ fun ChannelUnavailable(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text(
-            text = "Bu kanalın çalışan yayını bulunamadı",
+            text = stringResource(R.string.player_unavailable),
             style = MaterialTheme.typography.titleLarge,
             color = WorldTvColors.OnSurface,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Button(onClick = onRetry, modifier = Modifier.focusRequester(retryFocus)) {
-                Text("Yeniden dene")
+                Text(stringResource(R.string.player_retry))
             }
-            Button(onClick = onBack) { Text("Listeye dön") }
+            Button(onClick = onBack) { Text(stringResource(R.string.player_back_to_list)) }
         }
     }
 }

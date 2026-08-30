@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="radio_title">Radyo</string>
+    <string name="radio_loading">Radyo istasyonları yükleniyor…</string>
+    <string name="radio_now_playing">Çalıyor: %1$s</string>
+    <string name="radio_favorites">Favoriler</string>
+    <string name="radio_all_stations">Tüm istasyonlar</string>
+    <string name="radio_countries">Ülkeler</string>
+    <string name="radio_all_countries">Tümü</string>
+    <!-- Prefix marking a favourited station in the list. -->
+    <string name="radio_favorite_marker">★ %1$s</string>
+</resources>

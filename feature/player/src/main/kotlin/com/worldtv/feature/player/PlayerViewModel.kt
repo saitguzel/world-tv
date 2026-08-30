@@ -66,6 +66,7 @@ class PlayerViewModel @Inject constructor(
     private val playerFactory: PlayerFactory,
     private val playbackQueue: PlaybackQueueHolder,
     private val captionSettings: CaptionSettings,
+    private val labels: PlayerLabels,
     private val time: TimeProvider,
 ) : ViewModel() {
 
@@ -164,8 +165,18 @@ class PlayerViewModel @Inject constructor(
             currentTracks = tracks
             _uiState.update {
                 it.copy(
-                    subtitleTracks = TrackController.optionsOf(tracks, TrackType.TEXT),
-                    audioTracks = TrackController.optionsOf(tracks, TrackType.AUDIO),
+                    subtitleTracks = TrackController.optionsOf(
+                        tracks = tracks,
+                        type = TrackType.TEXT,
+                        unknownLabel = labels.unknownTrack,
+                        offLabel = labels.subtitlesOff,
+                    ),
+                    audioTracks = TrackController.optionsOf(
+                        tracks = tracks,
+                        type = TrackType.AUDIO,
+                        unknownLabel = labels.unknownTrack,
+                        offLabel = labels.subtitlesOff,
+                    ),
                 )
             }
         }

@@ -27,6 +27,8 @@ import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.core.model.Category
 import com.worldtv.core.model.Country
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.catalog.R
 
 /** Which facet the drawer is currently listing. */
 enum class BrowseFacet { COUNTRY, CATEGORY }
@@ -67,8 +69,12 @@ fun CountryDrawer(
             Modifier.padding(bottom = 12.dp).focusGroup(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Button(onClick = { facet = BrowseFacet.COUNTRY }) { Text("Ülkeler") }
-            Button(onClick = { facet = BrowseFacet.CATEGORY }) { Text("Kategoriler") }
+            Button(onClick = { facet = BrowseFacet.COUNTRY }) {
+                Text(stringResource(R.string.browse_countries))
+            }
+            Button(onClick = { facet = BrowseFacet.CATEGORY }) {
+                Text(stringResource(R.string.browse_categories))
+            }
         }
 
         LazyColumn(

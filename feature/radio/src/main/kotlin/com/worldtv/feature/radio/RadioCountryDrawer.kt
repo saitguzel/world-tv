@@ -19,6 +19,8 @@ import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.core.model.Country
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.radio.R
 
 /**
  * Country filter for radio.
@@ -41,7 +43,7 @@ fun RadioCountryDrawer(
             .padding(end = 16.dp),
     ) {
         Text(
-            text = "Ülkeler",
+            text = stringResource(R.string.radio_countries),
             style = MaterialTheme.typography.titleMedium,
             color = WorldTvColors.OnSurfaceMuted,
             modifier = Modifier.padding(bottom = 12.dp),
@@ -57,7 +59,7 @@ fun RadioCountryDrawer(
                 ListItem(
                     selected = selectedCountry == null,
                     onClick = { onCountrySelected(null) },
-                    headlineContent = { Text("Tümü") },
+                    headlineContent = { Text(stringResource(R.string.radio_all_countries)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

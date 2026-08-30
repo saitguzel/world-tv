@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="favorites_title">Favoriler</string>
+    <string name="favorites_empty">Henüz favori kanalınız yok.\nBir kanala uzun basarak favorilere ekleyebilirsiniz.</string>
+    <string name="favorites_check">Favorileri kontrol et</string>
+</resources>

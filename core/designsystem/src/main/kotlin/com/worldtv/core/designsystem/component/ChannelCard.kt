@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -42,6 +43,7 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.size.Size
+import com.worldtv.core.designsystem.R
 import com.worldtv.core.designsystem.theme.LocalReduceMotion
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
@@ -80,6 +82,26 @@ fun ChannelCard(
     var focused by remember { mutableStateOf(false) }
     val reduceMotion = LocalReduceMotion.current
 
+    // Built here rather than in a plain function so the wording comes from resources:
+    // TalkBack is used on TV, and this is the only description a card ever gets.
+    val description = buildString {
+        append(state.name)
+        if (state.isFavorite) append(", ").append(stringResource(R.string.a11y_favorite))
+        state.nowPlaying?.let {
+            append(", ").append(stringResource(R.string.a11y_now_playing, it.title))
+        }
+        append(", ").append(
+            stringResource(
+                when (state.badge) {
+                    HealthBadge.VERIFIED -> R.string.a11y_state_verified
+                    HealthBadge.UNCHECKED -> R.string.a11y_state_unchecked
+                    HealthBadge.GEO_BLOCKED -> R.string.a11y_state_geo_blocked
+                    HealthBadge.UNAVAILABLE -> R.string.a11y_state_unavailable
+                },
+            ),
+        )
+    }
+
     val scale by animateFloatAsState(
         targetValue = if (focused && !reduceMotion) WorldTvDimens.FocusScale else 1f,
         animationSpec = tween(WorldTvDimens.FocusAnimationMillis, easing = FastOutSlowInEasing),
@@ -102,7 +124,7 @@ fun ChannelCard(
                 focused = it.isFocused
                 onFocusChanged(it.isFocused)
             }
-            .semantics { contentDescription = state.contentDescription() },
+            .semantics { contentDescription = description },
         // The scale animation above is ours, so the built-in one is switched off.
         scale = ClickableSurfaceScale.None,
         shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(WorldTvDimens.CardCorner)),
@@ -218,16 +240,3 @@ private fun FavoriteBadge() {
     )
 }
 
-private fun ChannelCardState.contentDescription(): String = buildString {
-    append(name)
-    if (isFavorite) append(", favori")
-    nowPlaying?.let { append(", şu an: " + it.title) }
-    append(
-        when (badge) {
-            HealthBadge.VERIFIED -> ", doğrulandı"
-            HealthBadge.UNCHECKED -> ", henüz kontrol edilmedi"
-            HealthBadge.GEO_BLOCKED -> ", bölgesel kısıtlı olabilir"
-            HealthBadge.UNAVAILABLE -> ", şu an kullanılamıyor"
-        },
-    )
-}

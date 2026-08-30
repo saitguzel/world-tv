@@ -25,6 +25,8 @@ import com.worldtv.core.designsystem.component.LoadingState
 import com.worldtv.core.designsystem.component.TvChannelGrid
 import com.worldtv.core.model.ChannelSummary
 import com.worldtv.core.model.Programme
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.catalog.R
 
 /**
  * Browse: a persistent country/category drawer on the left, the channel grid on the
@@ -98,13 +100,13 @@ fun BrowseScreen(
 
             when {
                 isInitialLoad -> LoadingState(
-                    message = "Kanallar yükleniyor…",
+                    message = stringResource(R.string.browse_loading),
                     modifier = Modifier.weight(1f),
                 )
 
                 channels.itemCount == 0 -> EmptyState(
-                    message = "Bu listede kanal yok",
-                    actionLabel = "Yeniden dene",
+                    message = stringResource(R.string.browse_empty),
+                    actionLabel = stringResource(R.string.browse_retry),
                     onAction = { channels.refresh() },
                     modifier = Modifier.weight(1f),
                 )
@@ -123,7 +125,12 @@ fun BrowseScreen(
                     ) { index ->
                         val summary = channels[index] ?: return@items
                         ChannelCard(
-                            state = summary.toCardState(nowPlaying[summary.channel.id]),
+                            state = summary.toCardState(
+                                nowPlaying = nowPlaying[summary.channel.id],
+                                latencyLabel = summary.bestLatencyMs?.let {
+                                    stringResource(R.string.latency_ms, it)
+                                },
+                            ),
                             onClick = {
                                 // Hand the player the ids loaded in this grid, so
                                 // up/down zaps through what the user was browsing.
@@ -153,6 +160,7 @@ fun BrowseScreen(
 
 internal fun ChannelSummary.toCardState(
     nowPlaying: Programme? = null,
+    latencyLabel: String? = null,
 ): ChannelCardState = ChannelCardState(
     id = channel.id,
     name = channel.name,
@@ -161,6 +169,6 @@ internal fun ChannelSummary.toCardState(
     isFavorite = isFavorite,
     // Falls back to the measured latency only when there is no guide for this
     // channel — a viewer wants to know what is on, not how fast the socket was.
-    subtitle = bestLatencyMs?.let { "$it ms" },
+    subtitle = latencyLabel,
     nowPlaying = nowPlaying,
 )

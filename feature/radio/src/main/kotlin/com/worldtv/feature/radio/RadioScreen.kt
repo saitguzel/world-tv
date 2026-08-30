@@ -29,6 +29,8 @@ import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.core.model.HealthBadge
 import com.worldtv.core.model.RadioStation
 import com.worldtv.core.model.StreamState
+import androidx.compose.ui.res.stringResource
+import com.worldtv.feature.radio.R
 
 @Composable
 fun RadioScreen(
@@ -42,7 +44,7 @@ fun RadioScreen(
     val selectedCountry by viewModel.country.collectAsStateWithLifecycle()
 
     if (stations.itemCount == 0 && countries.isEmpty()) {
-        LoadingState(message = "Radyo istasyonları yükleniyor…", modifier = modifier)
+        LoadingState(message = stringResource(R.string.radio_loading), modifier = modifier)
         return
     }
 
@@ -55,7 +57,8 @@ fun RadioScreen(
 
         Column(Modifier.weight(1f)) {
         Text(
-            text = nowPlaying?.let { "Çalıyor: ${it.name}" } ?: "Radyo",
+            text = nowPlaying?.let { stringResource(R.string.radio_now_playing, it.name) }
+                ?: stringResource(R.string.radio_title),
             style = MaterialTheme.typography.headlineLarge,
             color = WorldTvColors.OnSurface,
             modifier = Modifier.padding(bottom = 16.dp),
@@ -73,7 +76,7 @@ fun RadioScreen(
             if (favorites.isNotEmpty()) {
                 item {
                     Text(
-                        text = "Favoriler",
+                        text = stringResource(R.string.radio_favorites),
                         style = MaterialTheme.typography.titleMedium,
                         color = WorldTvColors.OnSurfaceMuted,
                         modifier = Modifier.padding(vertical = 8.dp),
@@ -92,7 +95,7 @@ fun RadioScreen(
                 }
                 item {
                     Text(
-                        text = "Tüm istasyonlar",
+                        text = stringResource(R.string.radio_all_stations),
                         style = MaterialTheme.typography.titleMedium,
                         color = WorldTvColors.OnSurfaceMuted,
                         modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
@@ -133,7 +136,11 @@ private fun StationRow(
         onLongClick = onLongClick,
         headlineContent = {
             Text(
-                text = if (isFavorite) "★ ${station.name}" else station.name,
+                text = if (isFavorite) {
+                    stringResource(R.string.radio_favorite_marker, station.name)
+                } else {
+                    station.name
+                },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Ayarlar</string>
+
+    <string name="settings_show_nsfw">Yetişkin kanallarını göster</string>
+    <string name="settings_show_unchecked">Kontrol edilmemiş yayınları göster</string>
+    <string name="settings_show_unchecked_hint">Kapatırsanız yalnızca doğrulanmış kanallar listelenir</string>
+    <string name="settings_show_geo_blocked">Bölgesel kısıtlı yayınları göster</string>
+    <string name="settings_show_geo_blocked_hint">Bölgenizde çalışıyor olabilirler</string>
+    <string name="settings_preview">Odaklanınca önizleme</string>
+    <string name="settings_preview_hint">Bir kanalda kısa süre durunca sessiz önizleme başlar</string>
+    <string name="settings_reduce_motion">Animasyonları azalt</string>
+
+    <string name="settings_resync">Katalogu şimdi yenile</string>
+    <string name="settings_resync_hint">Değişmemiş dosyalar tekrar indirilmez</string>
+    <string name="settings_resyncing">Yenileniyor…</string>
+    <string name="settings_recheck">Tüm yayınları yeniden kontrol et</string>
+    <string name="settings_recheck_hint">Gizlenen yayınlar da dahil, arka planda kademeli olarak</string>
+
+    <string name="settings_health_aggressiveness">Sağlık kontrolü yoğunluğu</string>
+    <string name="settings_health_light">Hafif</string>
+    <string name="settings_health_light_hint">Yalnızca hızlı kontrol, düşük veri kullanımı</string>
+    <string name="settings_health_balanced">Dengeli</string>
+    <string name="settings_health_balanced_hint">Manifest ve segment kontrolü — önerilen</string>
+    <string name="settings_health_thorough">Kapsamlı</string>
+    <string name="settings_health_thorough_hint">Daha fazla eşzamanlı kontrol, güçlü cihazlar için</string>
+
+    <!-- verified stream count, hidden stream count -->
+    <string name="settings_health_summary">%1$d yayın doğrulandı, %2$d yayın gizlendi</string>
+    <string name="settings_disclaimer">WorldTV hiçbir içerik barındırmaz veya yayınlamaz. Tüm yayın adresleri herkese açık iptv-org ve Radio Browser dizinlerinden gelir. Kaldırma talepleri için depodaki iletişim adresini kullanın.</string>
+</resources>
