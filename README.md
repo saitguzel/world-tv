@@ -21,6 +21,10 @@ Mimari incelemesi ve dokümandan sapmaların gerekçeleri:
 
 ## Kurulum
 
+TV'ye kurmak için: **[INSTALL.md](INSTALL.md)**
+
+Derleme:
+
 ```bash
 ./gradlew assembleDebug
 ./gradlew :data:health:test :core:model:test :data:sync:test   # 100 test, emülatör gerekmez
