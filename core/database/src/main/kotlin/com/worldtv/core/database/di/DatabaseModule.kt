@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.worldtv.core.database.WorldTvDatabase
 import com.worldtv.core.database.dao.ChannelDao
+import com.worldtv.core.database.dao.EpgDao
 import com.worldtv.core.database.dao.RadioDao
 import com.worldtv.core.database.dao.StreamDao
 import com.worldtv.core.database.dao.UserDataDao
@@ -39,4 +40,6 @@ object DatabaseModule {
     @Provides fun provideUserDataDao(db: WorldTvDatabase): UserDataDao = db.userDataDao()
 
     @Provides fun provideYouTubeDao(db: WorldTvDatabase): YouTubeDao = db.youTubeDao()
+
+    @Provides fun provideEpgDao(db: WorldTvDatabase): EpgDao = db.epgDao()
 }

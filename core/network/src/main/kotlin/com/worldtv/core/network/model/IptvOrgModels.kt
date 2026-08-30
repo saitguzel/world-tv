@@ -70,6 +70,19 @@ data class ApiCategory(
     val name: String = "",
 )
 
+/** EPG sources: which XMLTV feed carries which channel. */
+@Serializable
+data class ApiGuide(
+    val channel: String,
+    val feed: String? = null,
+    /** XMLTV endpoint. One file usually covers a whole country. */
+    val url: String = "",
+    val site: String? = null,
+    @SerialName("site_id") val siteId: String? = null,
+    @SerialName("site_name") val siteName: String? = null,
+    val lang: String? = null,
+)
+
 /** DMCA removals. Filtering these is not optional. */
 @Serializable
 data class ApiBlocklistEntry(

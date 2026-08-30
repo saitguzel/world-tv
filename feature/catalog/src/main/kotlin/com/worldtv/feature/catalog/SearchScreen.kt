@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -36,9 +37,15 @@ import com.worldtv.core.designsystem.theme.WorldTvDimens
 @Composable
 fun SearchScreen(
     onChannelSelected: (String) -> Unit,
+    initialQuery: String? = null,
     modifier: Modifier = Modifier,
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
+    // Voice search delivers a whole phrase; typing it out again would defeat the point.
+    LaunchedEffect(initialQuery) {
+        if (!initialQuery.isNullOrBlank()) viewModel.setQuery(initialQuery)
+    }
+
     val query by viewModel.query.collectAsStateWithLifecycle()
     val results by viewModel.results.collectAsStateWithLifecycle()
 

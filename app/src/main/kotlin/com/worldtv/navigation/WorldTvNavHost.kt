@@ -1,6 +1,11 @@
 package com.worldtv.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -46,8 +51,16 @@ object Routes {
 @Composable
 fun WorldTvNavHost(
     onExit: () -> Unit = {},
+    voiceQuery: StateFlow<String?> = MutableStateFlow(null),
     navController: NavHostController = rememberNavController(),
 ) {
+    // A query from Assistant jumps straight to search rather than waiting for the
+    // user to navigate there — that is the whole point of speaking to the TV.
+    val pendingVoiceQuery by voiceQuery.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingVoiceQuery) {
+        if (!pendingVoiceQuery.isNullOrBlank()) navController.navigate(Routes.SEARCH)
+    }
+
     val toPlayer: (String) -> Unit = { channelId ->
         navController.navigate(Routes.player(channelId))
     }
@@ -84,7 +97,10 @@ fun WorldTvNavHost(
         }
 
         composable(Routes.SEARCH) {
-            SearchScreen(onChannelSelected = toPlayer)
+            SearchScreen(
+                onChannelSelected = toPlayer,
+                initialQuery = pendingVoiceQuery,
+            )
         }
 
         composable(Routes.RADIO) {

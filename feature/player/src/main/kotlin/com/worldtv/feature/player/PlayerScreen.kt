@@ -52,6 +52,7 @@ fun PlayerScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val queue by viewModel.queue.collectAsStateWithLifecycle()
+    val nowNext by viewModel.nowNext.collectAsStateWithLifecycle()
     val overlayFocus = remember { FocusRequester() }
     val containerFocus = remember { FocusRequester() }
     val repeatLimiter = rememberKeyRepeatLimiter()
@@ -154,7 +155,7 @@ fun PlayerScreen(
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.TopStart).padding(48.dp),
         ) {
-            ChannelInfoCard(state)
+            ChannelInfoCard(state, nowNext)
         }
 
         AnimatedVisibility(

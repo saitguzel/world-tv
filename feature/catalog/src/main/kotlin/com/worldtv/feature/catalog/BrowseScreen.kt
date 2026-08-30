@@ -19,6 +19,7 @@ import com.worldtv.core.designsystem.component.EmptyState
 import com.worldtv.core.designsystem.component.LoadingState
 import com.worldtv.core.designsystem.component.TvChannelGrid
 import com.worldtv.core.model.ChannelSummary
+import com.worldtv.core.model.Programme
 
 /**
  * Browse: a persistent country/category drawer on the left, the channel grid on the
@@ -35,6 +36,7 @@ fun BrowseScreen(
     val countries by viewModel.countries.collectAsStateWithLifecycle()
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     val channels = viewModel.channels.collectAsLazyPagingItems()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
 
     // Arriving from a country tile on Home preselects that country.
@@ -90,7 +92,7 @@ fun BrowseScreen(
                 ) { index ->
                     val summary = channels[index] ?: return@items
                     ChannelCard(
-                        state = summary.toCardState(),
+                        state = summary.toCardState(nowPlaying[summary.channel.id]),
                         onClick = {
                             // Hand the player the ids currently loaded in this grid,
                             // so up/down zaps through what the user was browsing.
@@ -111,11 +113,16 @@ fun BrowseScreen(
     }
 }
 
-internal fun ChannelSummary.toCardState(): ChannelCardState = ChannelCardState(
+internal fun ChannelSummary.toCardState(
+    nowPlaying: Programme? = null,
+): ChannelCardState = ChannelCardState(
     id = channel.id,
     name = channel.name,
     logoUrl = channel.logoUrl,
     badge = healthBadge,
     isFavorite = isFavorite,
-    subtitle = bestLatencyMs?.let { "${it} ms" },
+    // Falls back to the measured latency only when there is no guide for this
+    // channel — a viewer wants to know what is on, not how fast the socket was.
+    subtitle = bestLatencyMs?.let { "$it ms" },
+    nowPlaying = nowPlaying,
 )

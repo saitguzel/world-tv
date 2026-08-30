@@ -29,7 +29,9 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.size.Size
+import com.worldtv.core.designsystem.component.NowNextBlock
 import com.worldtv.core.designsystem.theme.WorldTvColors
+import com.worldtv.core.model.NowNext
 
 /**
  * What is drawn while a channel loads.
@@ -59,7 +61,11 @@ fun LoadingBackdrop(logoUrl: String?, modifier: Modifier = Modifier) {
 
 /** The card shown for three seconds after a zap. */
 @Composable
-fun ChannelInfoCard(state: PlayerUiState, modifier: Modifier = Modifier) {
+fun ChannelInfoCard(
+    state: PlayerUiState,
+    nowNext: NowNext = NowNext(null, null),
+    modifier: Modifier = Modifier,
+) {
     val channel = state.channel ?: return
     Column(
         modifier
@@ -89,6 +95,15 @@ fun ChannelInfoCard(state: PlayerUiState, modifier: Modifier = Modifier) {
                 )
             }
         }
+
+        // Only drawn when a guide exists for this channel; the block renders nothing
+        // rather than reserving empty space for the many channels that have none.
+        NowNextBlock(
+            now = nowNext.now,
+            next = nowNext.next,
+            instant = System.currentTimeMillis(),
+            modifier = Modifier.padding(top = 8.dp),
+        )
     }
 }
 

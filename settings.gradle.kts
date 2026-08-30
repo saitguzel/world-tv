@@ -42,3 +42,5 @@ include(":feature:radio")
 include(":feature:favorites")
 include(":feature:settings")
 include(":feature:youtube")
+
+include(":baselineprofile")

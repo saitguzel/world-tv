@@ -89,6 +89,14 @@ fun SettingsScreen(
         }
         item {
             SwitchRow(
+                title = "Odaklanınca önizleme",
+                subtitle = "Bir kanalda kısa süre durunca sessiz önizleme başlar",
+                checked = state.preferences.previewOnFocus,
+                onCheckedChange = viewModel::setPreviewOnFocus,
+            )
+        }
+        item {
+            SwitchRow(
                 title = "Animasyonları azalt",
                 checked = state.preferences.reduceMotion,
                 onCheckedChange = viewModel::setReduceMotion,

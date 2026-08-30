@@ -52,6 +52,8 @@ data class UserPreferences(
     val reduceMotion: Boolean = false,
     /** User-supplied YouTube Data API key; null disables YouTube mode. */
     val youTubeApiKey: String? = null,
+    /** Preview the focused channel in the grid after a short dwell. */
+    val previewOnFocus: Boolean = true,
 )
 
 @Singleton
@@ -70,6 +72,7 @@ class UserPreferencesRepository @Inject constructor(
                 ?: HealthAggressiveness.BALANCED,
             reduceMotion = prefs[REDUCE_MOTION] ?: false,
             youTubeApiKey = prefs[YOUTUBE_API_KEY],
+            previewOnFocus = prefs[PREVIEW_ON_FOCUS] ?: true,
         )
     }
 
@@ -92,6 +95,8 @@ class UserPreferencesRepository @Inject constructor(
 
     suspend fun setYouTubeApiKey(value: String) = edit { it[YOUTUBE_API_KEY] = value.trim() }
 
+    suspend fun setPreviewOnFocus(value: Boolean) = edit { it[PREVIEW_ON_FOCUS] = value }
+
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
         context.dataStore.edit(block)
     }
@@ -105,5 +110,6 @@ class UserPreferencesRepository @Inject constructor(
         val HEALTH_AGGRESSIVENESS = stringPreferencesKey("health_aggressiveness")
         val REDUCE_MOTION = booleanPreferencesKey("reduce_motion")
         val YOUTUBE_API_KEY = stringPreferencesKey("youtube_api_key")
+        val PREVIEW_ON_FOCUS = booleanPreferencesKey("preview_on_focus")
     }
 }

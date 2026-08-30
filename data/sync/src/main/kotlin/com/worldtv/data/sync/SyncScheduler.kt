@@ -13,6 +13,7 @@ import androidx.work.WorkManager
 import com.worldtv.data.repository.SyncTrigger
 import com.worldtv.data.sync.worker.CatalogSyncWorker
 import com.worldtv.data.sync.worker.CleanupWorker
+import com.worldtv.data.sync.worker.EpgSyncWorker
 import com.worldtv.data.sync.worker.FavoritesHealthWorker
 import com.worldtv.data.sync.worker.HealthSweepWorker
 import com.worldtv.data.sync.worker.YouTubeLiveWorker
@@ -82,6 +83,15 @@ class SyncScheduler @Inject constructor(
         )
 
         workManager.enqueueUniquePeriodicWork(
+            EPG_SYNC,
+            ExistingPeriodicWorkPolicy.KEEP,
+            PeriodicWorkRequestBuilder<EpgSyncWorker>(12, TimeUnit.HOURS)
+                .setConstraints(networkOnly)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.HOURS)
+                .build(),
+        )
+
+        workManager.enqueueUniquePeriodicWork(
             CLEANUP,
             ExistingPeriodicWorkPolicy.KEEP,
             PeriodicWorkRequestBuilder<CleanupWorker>(7, TimeUnit.DAYS)
@@ -115,6 +125,7 @@ class SyncScheduler @Inject constructor(
         const val HEALTH_SWEEP = "health-sweep"
         const val FAVORITES_HEALTH = "favorites-health"
         const val YOUTUBE_LIVE = "youtube-live"
+        const val EPG_SYNC = "epg-sync"
         const val CLEANUP = "cleanup"
     }
 }

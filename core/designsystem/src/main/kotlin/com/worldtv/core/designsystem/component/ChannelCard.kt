@@ -46,6 +46,7 @@ import com.worldtv.core.designsystem.theme.LocalReduceMotion
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.core.model.HealthBadge
+import com.worldtv.core.model.Programme
 
 /** Everything the card needs, flattened so it can be previewed without a database. */
 data class ChannelCardState(
@@ -55,6 +56,8 @@ data class ChannelCardState(
     val badge: HealthBadge,
     val isFavorite: Boolean,
     val subtitle: String? = null,
+    /** What is on right now, when the guide has been fetched for this channel. */
+    val nowPlaying: Programme? = null,
 )
 
 /**
@@ -148,14 +151,24 @@ fun ChannelCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                state.subtitle?.let { subtitle ->
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = WorldTvColors.OnSurfaceMuted,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                // The guide beats the latency reading when both exist: a viewer
+                // wants to know what is on, not how fast the socket was.
+                if (state.nowPlaying != null) {
+                    NowPlayingLine(
+                        programme = state.nowPlaying,
+                        now = System.currentTimeMillis(),
+                        modifier = Modifier.padding(top = 2.dp),
                     )
+                } else {
+                    state.subtitle?.let { subtitle ->
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = WorldTvColors.OnSurfaceMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }
@@ -203,6 +216,7 @@ private fun FavoriteBadge() {
 private fun ChannelCardState.contentDescription(): String = buildString {
     append(name)
     if (isFavorite) append(", favori")
+    nowPlaying?.let { append(", şu an: " + it.title) }
     append(
         when (badge) {
             HealthBadge.VERIFIED -> ", doğrulandı"

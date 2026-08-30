@@ -233,11 +233,24 @@ ekranında.
 
 ## G. Uygulanmayanlar (bilinçli)
 
-- **YouTube (Faz 4).** Dokümanın kendi tavsiyesi. Room tablosu
-  (`youtube_streams`) v1 şemasında yer alıyor ki sonradan migration
-  yazılmasın.
-- **EPG, PiP, çoklu profil.** Bölüm 14'te zaten kapsam dışı.
-- **Baseline Profile.** Gerçek cihazda üretilmesi gerekiyor.
+Tüm fazlar (1–5) tamamlandı. Kapsam dışı bırakılanlar, Bölüm 14'ün kendi
+listesinden:
+
+- **PiP, çoklu profil / bulut senkronizasyonu, kayıt / zaman kaydırma.**
+- **3D küre.** Kumandayla kullanışsız, GPU maliyeti yüksek.
+
+Faz 5'te kurulan ama gerçek donanım gerektiren tek şey **Baseline Profile**:
+`:baselineprofile` modülü ve `generateBaselineProfile` görevi hazır, ancak
+profil rootlu bir emülatörde veya userdebug cihazda üretilmelidir.
+
+### Faz 4–5'te dokümandan sapılan noktalar
+
+| Doküman | Uygulanan | Gerekçe |
+|---|---|---|
+| YouTube API anahtarı uygulamada | Ayarlardan kullanıcı giriyor | Gömülü anahtar paylaşılmış anahtardır: tek kullanıcı herkesin günlük kotasını tüketir, ve ikili dosyadan çıkarılabilir. |
+| `search` sonuçlarını 6 saat cache'le | Aynı + `expiresAt` ile *gizleme* | YouTube bir yayının bittiğini söylemiyor. Süresi dolmuş kaydı "canlı" göstermek kullanıcıyı ölü bir oynatıcıya yollar. |
+| EPG kanal başına | Kaynak (URL) başına | Bir XMLTV dosyası genelde bütün bir ülkeyi kapsıyor; kanal başına indirmek iki yüz indirme demek. |
+| — | Rehber saklama penceresi 1 gün geri / 2 gün ileri | `programmes` uygulamanın en hızlı büyüyen tablosu; yüz kanal × iki hafta milyon satırı aşıyor. |
 
 ---
 
@@ -248,8 +261,9 @@ Bu depo yazılırken kullanılan ortamda **Android SDK ve Google Maven
 
 - ✅ `:core:model` ve `:data:health` — kotlinc ile derlendi, **63 testin tamamı
   geçiyor**: durum makinesi, HLS ayrıştırma, URL sınıflandırma, host kısıtlama,
-  zap kuyruğu, MockWebServer'a karşı HTTP sondası ve `HealthChecker`
-  orkestrasyonu.
+  zap kuyruğu, MockWebServer'a karşı HTTP sondası, `HealthChecker`
+  orkestrasyonu, XMLTV ayrıştırma ve zaman damgası offset'leri, IFrame sayfası
+  üretimi, önizleme bekleme kuralı. Toplam **100 test**.
 
   Yukarıdaki A2 (sınırsız okuma) düzeltmesi için özel bir regresyon testi var:
   `Range` başlığını yok sayıp bitimsiz gövde dönen bir sunucuya karşı sonda 15

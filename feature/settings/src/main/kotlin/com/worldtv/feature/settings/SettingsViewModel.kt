@@ -65,6 +65,9 @@ class SettingsViewModel @Inject constructor(
     fun setShowGeoBlocked(value: Boolean) =
         viewModelScope.launch { preferences.setShowGeoBlocked(value) }
 
+    fun setPreviewOnFocus(value: Boolean) =
+        viewModelScope.launch { preferences.setPreviewOnFocus(value) }
+
     fun setReduceMotion(value: Boolean) =
         viewModelScope.launch { preferences.setReduceMotion(value) }
 

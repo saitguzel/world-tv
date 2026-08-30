@@ -13,8 +13,8 @@ patladığında aynı kanalın alternatifine sessizce geçer.
 | 1 | Modül yapısı, Room şeması, iptv-org senkronizasyonu, katalog UI, ExoPlayer | ✅ |
 | 2 | Sağlık motoru: Kademe 1+2, durum makinesi, sweep worker, tembel doğrulama, oynatma anında düşürme | ✅ |
 | 3 | Radyo + MediaSessionService, favoriler, arama, son izlenenler, ayarlar | ✅ |
-| 4 | YouTube (WebView + IFrame API) | ⏳ şema hazır, UI yok |
-| 5 | Baseline Profile, EPG, sesli arama | ⏳ |
+| 4 | YouTube (WebView + IFrame API, D-pad köprüsü, kürate liste) | ✅ |
+| 5 | Baseline Profile, EPG (XMLTV), Assistant ile sesli arama, kanal önizleme | ✅ |
 
 Mimari incelemesi ve dokümandan sapmaların gerekçeleri:
 [`ARCHITECTURE-REVIEW.md`](ARCHITECTURE-REVIEW.md).
@@ -23,7 +23,8 @@ Mimari incelemesi ve dokümandan sapmaların gerekçeleri:
 
 ```bash
 ./gradlew assembleDebug
-./gradlew :data:health:test :core:model:test   # 63 test, emülatör gerekmez
+./gradlew :data:health:test :core:model:test :data:sync:test   # 100 test, emülatör gerekmez
+./gradlew :baselineprofile:generateBaselineProfile              # rootlu emülatör/userdebug cihaz gerekir
 ./gradlew :app:connectedAndroidTest            # D-pad odak regresyon testleri
 ```
 
@@ -38,7 +39,8 @@ Search      Sesli arama → kademeli filtreleme → alfabetik ızgara klavye
 Player      Tam ekran · zap (yukarı/aşağı) · yan kanal çekmecesi (sağ/sol)
 Favorites   Favori ızgarası, uzun basma ile çıkarma
 Radio       İstasyon listesi, MediaSessionService ile arka planda çalma
-Settings    Filtreler · sağlık kontrolü yoğunluğu · katalogu yenile
+YouTube     Kürate kanallardaki canlı yayınlar + IFrame oynatıcı
+Settings    Filtreler · sağlık yoğunluğu · önizleme · API anahtarı · katalogu yenile
 ```
 
 Gezinme derinliği en fazla iki: her ekran ana ekrandan bir sıçrama uzakta.
@@ -56,6 +58,37 @@ aradaki dördü açılmaz) ve komşu kanalların manifest'i sağlık sondajı ü
 önden çekilir — aynı havuzlanmış bağlantı kullanıldığı için zap gecikmesinden
 yaklaşık bir saniye kazandırır.
 
+## EPG
+
+`guides.json` hangi XMLTV kaynağının hangi kanalı kapsadığını söylüyor; senkronizasyon
+kanal başına değil **kaynak başına** indiriyor — bir XMLTV dosyası genelde bütün bir
+ülkeyi kapsadığı için bu, iki yüz indirmeyi bire düşürüyor.
+
+Ayrıştırıcı SAX tabanlı ve akış halinde çalışıyor: ulusal bir rehber onlarca megabayt
+ve yüz binlerce `<programme>` öğesi içerir, hepsini belleğe almak TV kutusunun sahip
+olduğundan fazla heap ister. Bozuk bir girdi tüm belgeyi düşürmüyor — halka açık
+rehberlerin kalitesi çok değişken ve tek bir hatalı zaman damgası yüzünden bir ülkenin
+tüm yayın akışını kaybetmek kabul edilemez.
+
+Zaman damgaları XMLTV'nin `YYYYMMDDHHMMSS +HHMM` biçiminde; offset'i yanlış işlemek tüm
+akışı saatlerce kaydırır, bu yüzden `XmltvTime` elle yazıldı ve kapsamlı test edildi.
+
+Saklama penceresi dar tutuldu (1 gün geriye, 2 gün ileriye) — `programmes` uygulamanın
+en hızlı büyüyen tablosu ve dünün akışının hiçbir faydası yok.
+
+## YouTube
+
+ExoPlayer YouTube'u doğrudan oynatamaz. YouTube'dan HLS manifest çıkarmak daha kolay
+olurdu ama ToS ihlali; bunun yerine resmî **IFrame Player API** bir WebView içinde
+kullanılıyor. WebView bilinçli olarak odaklanamaz durumda: kumanda bir kez WebView'e
+girerse kendi tuş işleme mantığı devralır ve geri çıkmanın güvenilir bir yolu yoktur.
+Tuşlar Compose katmanında yakalanıp JS komutu olarak köprüleniyor.
+
+Keşif, 6 saatlik döngüde kürate edilmiş 16 kanalla sınırlı: `search.list` çağrısı
+günlük 10.000 birimlik kotadan **100 birim** yiyor. API anahtarı APK'ya gömülmüyor,
+ayarlardan kullanıcı giriyor — gömülü anahtar paylaşılmış anahtardır: tek kullanıcı
+herkesin kotasını tüketir ve ikili dosyadan çıkarılabilir.
+
 ## Modüller
 
 ```
@@ -68,7 +101,8 @@ yaklaşık bir saniye kazandırır.
 :data:health          ★ Sağlık kontrol motoru — saf Kotlin/JVM, hızlı testler
 :data:repository      Repository implementasyonları, Room ↔ sağlık motoru köprüsü
 :data:sync            Katalog senkronizasyonu, WorkManager işleri
-:feature:*            catalog, player, radio, favorites, settings
+:feature:*            catalog, player, radio, favorites, settings, youtube
+:baselineprofile      Macrobenchmark ile baseline profile üretimi
 ```
 
 `:core:model` ve `:data:health` bilinçli olarak Android'e bağımlı değil. Bu,

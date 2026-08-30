@@ -6,7 +6,9 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.worldtv.core.model.ChannelSummary
 import com.worldtv.core.model.Country
+import com.worldtv.core.model.Programme
 import com.worldtv.data.repository.ChannelRepository
+import com.worldtv.data.repository.EpgRepository
 import com.worldtv.data.repository.FavoritesRepository
 import com.worldtv.data.repository.HealthRepository
 import com.worldtv.data.repository.PlaybackQueueHolder
@@ -33,7 +35,22 @@ class CatalogViewModel @Inject constructor(
     private val preferences: UserPreferencesRepository,
     private val playbackQueue: PlaybackQueueHolder,
     private val favoritesRepository: FavoritesRepository,
+    private val epgRepository: EpgRepository,
 ) : ViewModel() {
+
+    private val visibleChannelIds = MutableStateFlow<List<String>>(emptyList())
+
+    /**
+     * What is on right now for the channels on screen.
+     *
+     * Keyed by channel and fetched for the visible set only: a country with two
+     * thousand channels has no business loading two thousand guide rows to render
+     * fifteen cards.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val nowPlaying: StateFlow<Map<String, Programme>> = visibleChannelIds
+        .flatMapLatest { ids -> epgRepository.nowForChannels(ids) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     private val _filter = MutableStateFlow(CatalogFilter())
     val filter: StateFlow<CatalogFilter> = _filter.asStateFlow()
@@ -63,6 +80,7 @@ class CatalogViewModel @Inject constructor(
      * take hours and spend most of that budget on countries nobody opened.
      */
     fun onChannelsVisible(channelIds: List<String>) {
+        visibleChannelIds.value = channelIds
         healthRepository.verifyVisibleChannels(viewModelScope, channelIds)
     }
 

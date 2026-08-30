@@ -38,4 +38,12 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
+
+// The XMLTV parser is plain JVM code (SAX, no Android), so its tests run here
+// without an emulator — it is the part of the EPG pipeline most likely to be wrong.
+tasks.withType<Test>().configureEach { useJUnitPlatform() }

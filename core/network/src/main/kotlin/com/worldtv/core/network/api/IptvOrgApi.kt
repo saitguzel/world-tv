@@ -40,6 +40,10 @@ interface IptvOrgApi {
     suspend fun categories(@Header("If-None-Match") etag: String?): Response<ResponseBody>
 
     @Streaming
+    @GET("guides.json")
+    suspend fun guides(@Header("If-None-Match") etag: String?): Response<ResponseBody>
+
+    @Streaming
     @GET("blocklist.json")
     suspend fun blocklist(@Header("If-None-Match") etag: String?): Response<ResponseBody>
 

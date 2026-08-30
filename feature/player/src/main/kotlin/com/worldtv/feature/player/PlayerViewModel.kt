@@ -8,11 +8,13 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.worldtv.core.model.Channel
 import com.worldtv.core.model.ChannelQueue
 import com.worldtv.core.model.ChannelSummary
+import com.worldtv.core.model.NowNext
 import com.worldtv.core.model.Stream
 import com.worldtv.core.model.StreamState
 import com.worldtv.core.model.TimeProvider
 import com.worldtv.data.health.PlaybackSignal
 import com.worldtv.data.repository.ChannelRepository
+import com.worldtv.data.repository.EpgRepository
 import com.worldtv.data.repository.FavoritesRepository
 import com.worldtv.data.repository.HealthRepository
 import com.worldtv.data.repository.PlaybackQueueHolder
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -52,6 +55,7 @@ class PlayerViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val healthRepository: HealthRepository,
     private val favoritesRepository: FavoritesRepository,
+    private val epgRepository: EpgRepository,
     private val playerFactory: PlayerFactory,
     private val playbackQueue: PlaybackQueueHolder,
     private val time: TimeProvider,
@@ -59,6 +63,17 @@ class PlayerViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
+
+    /** What is on now and next for the channel being watched. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val nowNext: StateFlow<NowNext> = _uiState
+        .map { it.channel?.id }
+        .distinctUntilChanged()
+        .flatMapLatest { channelId ->
+            if (channelId == null) flowOf(NowNext(null, null))
+            else epgRepository.nowAndNext(channelId)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NowNext(null, null))
 
     /** The list being zapped through, also rendered by the side channel drawer. */
     val queue: StateFlow<ChannelQueue> = playbackQueue.queue
