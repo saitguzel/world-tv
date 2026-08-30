@@ -50,10 +50,10 @@ data class UserPreferences(
     val lastMode: String = "TV",
     val healthAggressiveness: HealthAggressiveness = HealthAggressiveness.BALANCED,
     val reduceMotion: Boolean = false,
-    /** User-supplied YouTube Data API key; null disables YouTube mode. */
-    val youTubeApiKey: String? = null,
     /** Preview the focused channel in the grid after a short dwell. */
     val previewOnFocus: Boolean = true,
+    /** Most recent first, capped at [UserPreferencesRepository.MAX_RECENT_SEARCHES]. */
+    val recentSearches: List<String> = emptyList(),
 )
 
 @Singleton
@@ -71,8 +71,13 @@ class UserPreferencesRepository @Inject constructor(
                 ?.let { runCatching { HealthAggressiveness.valueOf(it) }.getOrNull() }
                 ?: HealthAggressiveness.BALANCED,
             reduceMotion = prefs[REDUCE_MOTION] ?: false,
-            youTubeApiKey = prefs[YOUTUBE_API_KEY],
             previewOnFocus = prefs[PREVIEW_ON_FOCUS] ?: true,
+            // Stored as one delimited string rather than a string-set: DataStore's
+            // set type is unordered, and recency order is the entire point here.
+            recentSearches = prefs[RECENT_SEARCHES]
+                ?.split(SEARCH_DELIMITER)
+                ?.filter { it.isNotBlank() }
+                .orEmpty(),
         )
     }
 
@@ -93,23 +98,50 @@ class UserPreferencesRepository @Inject constructor(
 
     suspend fun setReduceMotion(value: Boolean) = edit { it[REDUCE_MOTION] = value }
 
-    suspend fun setYouTubeApiKey(value: String) = edit { it[YOUTUBE_API_KEY] = value.trim() }
-
     suspend fun setPreviewOnFocus(value: Boolean) = edit { it[PREVIEW_ON_FOCUS] = value }
+
+    /** Records a search, moving a repeat to the front rather than duplicating it. */
+    suspend fun recordSearch(query: String) {
+        val cleaned = query.trim()
+        if (cleaned.length < MIN_RECORDED_SEARCH_LENGTH) return
+        edit { prefs ->
+            val existing = prefs[RECENT_SEARCHES]
+                ?.split(SEARCH_DELIMITER)
+                ?.filter { it.isNotBlank() }
+                .orEmpty()
+            val updated = (listOf(cleaned) + existing.filterNot { it.equals(cleaned, true) })
+                .take(MAX_RECENT_SEARCHES)
+            prefs[RECENT_SEARCHES] = updated.joinToString(SEARCH_DELIMITER)
+        }
+    }
+
+    suspend fun clearRecentSearches() = edit { it.remove(RECENT_SEARCHES) }
 
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
         context.dataStore.edit(block)
     }
 
-    private companion object {
-        val SHOW_NSFW = booleanPreferencesKey("show_nsfw")
-        val SHOW_UNCHECKED = booleanPreferencesKey("show_unchecked")
-        val SHOW_GEO_BLOCKED = booleanPreferencesKey("show_geo_blocked")
-        val HOME_COUNTRY = stringPreferencesKey("home_country")
-        val LAST_MODE = stringPreferencesKey("last_mode")
-        val HEALTH_AGGRESSIVENESS = stringPreferencesKey("health_aggressiveness")
-        val REDUCE_MOTION = booleanPreferencesKey("reduce_motion")
-        val YOUTUBE_API_KEY = stringPreferencesKey("youtube_api_key")
-        val PREVIEW_ON_FOCUS = booleanPreferencesKey("preview_on_focus")
+    companion object {
+        /** Short enough to be a full row on screen, long enough to be useful. */
+        const val MAX_RECENT_SEARCHES = 8
+
+        /** One or two letters is not a search worth remembering. */
+        private const val MIN_RECORDED_SEARCH_LENGTH = 3
+
+        private val SHOW_NSFW = booleanPreferencesKey("show_nsfw")
+        private val SHOW_UNCHECKED = booleanPreferencesKey("show_unchecked")
+        private val SHOW_GEO_BLOCKED = booleanPreferencesKey("show_geo_blocked")
+        private val HOME_COUNTRY = stringPreferencesKey("home_country")
+        private val LAST_MODE = stringPreferencesKey("last_mode")
+        private val HEALTH_AGGRESSIVENESS = stringPreferencesKey("health_aggressiveness")
+        private val REDUCE_MOTION = booleanPreferencesKey("reduce_motion")
+        private val PREVIEW_ON_FOCUS = booleanPreferencesKey("preview_on_focus")
+        private val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
+
+        /**
+         * A control character, so it cannot collide with anything a user could type
+         * on the grid keyboard.
+         */
+        private const val SEARCH_DELIMITER = "\u001F"
     }
 }

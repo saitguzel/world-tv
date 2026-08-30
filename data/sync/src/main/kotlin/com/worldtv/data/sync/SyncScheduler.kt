@@ -16,7 +16,6 @@ import com.worldtv.data.sync.worker.CleanupWorker
 import com.worldtv.data.sync.worker.EpgSyncWorker
 import com.worldtv.data.sync.worker.FavoritesHealthWorker
 import com.worldtv.data.sync.worker.HealthSweepWorker
-import com.worldtv.data.sync.worker.YouTubeLiveWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -72,17 +71,6 @@ class SyncScheduler @Inject constructor(
         )
 
         workManager.enqueueUniquePeriodicWork(
-            YOUTUBE_LIVE,
-            ExistingPeriodicWorkPolicy.KEEP,
-            PeriodicWorkRequestBuilder<YouTubeLiveWorker>(6, TimeUnit.HOURS)
-                .setConstraints(networkOnly)
-                // No aggressive backoff: a refused call is almost always quota
-                // exhaustion, and retrying sooner only spends more of it.
-                .setBackoffCriteria(BackoffPolicy.LINEAR, 2, TimeUnit.HOURS)
-                .build(),
-        )
-
-        workManager.enqueueUniquePeriodicWork(
             EPG_SYNC,
             ExistingPeriodicWorkPolicy.KEEP,
             PeriodicWorkRequestBuilder<EpgSyncWorker>(12, TimeUnit.HOURS)
@@ -124,7 +112,6 @@ class SyncScheduler @Inject constructor(
         const val CATALOG_SYNC_NOW = "catalog-sync-now"
         const val HEALTH_SWEEP = "health-sweep"
         const val FAVORITES_HEALTH = "favorites-health"
-        const val YOUTUBE_LIVE = "youtube-live"
         const val EPG_SYNC = "epg-sync"
         const val CLEANUP = "cleanup"
     }

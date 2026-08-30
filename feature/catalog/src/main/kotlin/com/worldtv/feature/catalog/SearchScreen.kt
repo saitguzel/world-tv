@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,6 +26,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.component.ChannelCard
 import com.worldtv.core.designsystem.component.TvChannelGrid
+import com.worldtv.core.designsystem.component.TvShelf
+import com.worldtv.core.model.ChannelSummary
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 
@@ -48,6 +52,8 @@ fun SearchScreen(
 
     val query by viewModel.query.collectAsStateWithLifecycle()
     val results by viewModel.results.collectAsStateWithLifecycle()
+    val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
+    val popularChannels by viewModel.popularChannels.collectAsStateWithLifecycle()
 
     val voiceLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
@@ -98,25 +104,94 @@ fun SearchScreen(
         }
 
         Column(Modifier.weight(0.6f)) {
-            if (query.isNotBlank() && results.isEmpty()) {
+            // Before a single letter is typed, offer what the user is most likely to
+            // want: what they searched for before, and what they actually watch. Most
+            // searches on a TV end in a click here rather than in typing.
+            if (query.isBlank()) {
+                if (recentSearches.isNotEmpty()) {
+                    SectionHeading("Son aramalar")
+                    RecentSearchRow(
+                        searches = recentSearches,
+                        onSelect = viewModel::setQuery,
+                        onClear = viewModel::clearRecentSearches,
+                    )
+                }
+                if (popularChannels.isNotEmpty()) {
+                    SectionHeading("Sık izlenenler")
+                    ResultGrid(popularChannels, viewModel, onChannelSelected)
+                }
+                if (recentSearches.isEmpty() && popularChannels.isEmpty()) {
+                    Text(
+                        text = "Aramaya başlayın",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = WorldTvColors.OnSurfaceMuted,
+                        modifier = Modifier.padding(24.dp),
+                    )
+                }
+                return@Column
+            }
+
+            if (results.isEmpty()) {
                 Text(
                     text = "Sonuç yok",
                     style = MaterialTheme.typography.titleLarge,
                     color = WorldTvColors.OnSurfaceMuted,
                     modifier = Modifier.padding(24.dp),
                 )
+                return@Column
             }
-            TvChannelGrid(columns = 3, modifier = Modifier.fillMaxWidth()) {
-                items(results, key = { it.channel.id }) { summary ->
-                    ChannelCard(
-                        state = summary.toCardState(),
-                        onClick = {
-                            viewModel.onChannelOpened(summary.channel.id)
-                            onChannelSelected(summary.channel.id)
-                        },
-                    )
-                }
-            }
+            ResultGrid(results, viewModel, onChannelSelected)
+        }
+    }
+}
+
+@Composable
+private fun SectionHeading(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        color = WorldTvColors.OnSurfaceMuted,
+        modifier = Modifier.padding(bottom = 8.dp),
+    )
+}
+
+@Composable
+private fun ResultGrid(
+    channels: List<ChannelSummary>,
+    viewModel: SearchViewModel,
+    onChannelSelected: (String) -> Unit,
+) {
+    TvChannelGrid(columns = 3, modifier = Modifier.fillMaxWidth()) {
+        items(channels, key = { it.channel.id }) { summary ->
+            ChannelCard(
+                state = summary.toCardState(),
+                onClick = {
+                    viewModel.onChannelOpened(summary.channel.id)
+                    onChannelSelected(summary.channel.id)
+                },
+            )
+        }
+    }
+}
+
+/**
+ * Previous queries as focusable chips.
+ *
+ * A row rather than a column: it sits above the results grid and must not push it off
+ * screen, and eight entries fit across a 1080p panel comfortably.
+ */
+@Composable
+private fun RecentSearchRow(
+    searches: List<String>,
+    onSelect: (String) -> Unit,
+    onClear: () -> Unit,
+) {
+    TvShelf(Modifier.height(64.dp)) {
+        items(searches, key = { it }) { search ->
+            Button(onClick = { onSelect(search) }) { Text(search) }
+        }
+        item {
+            Button(onClick = onClear) { Text("Temizle") }
         }
     }
 }

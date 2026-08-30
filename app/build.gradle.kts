@@ -71,7 +71,6 @@ dependencies {
     implementation(projects.feature.radio)
     implementation(projects.feature.favorites)
     implementation(projects.feature.settings)
-    implementation(projects.feature.youtube)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

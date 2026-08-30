@@ -11,12 +11,15 @@ import com.worldtv.data.repository.ChannelRepository
 import com.worldtv.data.repository.EpgRepository
 import com.worldtv.data.repository.FavoritesRepository
 import com.worldtv.data.repository.HealthRepository
+import com.worldtv.data.repository.PreviewStreamResolver
 import com.worldtv.data.repository.PlaybackQueueHolder
+import com.worldtv.data.repository.UserPreferences
 import com.worldtv.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,11 +35,31 @@ data class CatalogFilter(val country: String? = null, val category: String? = nu
 class CatalogViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val healthRepository: HealthRepository,
-    private val preferences: UserPreferencesRepository,
+    private val preferencesRepository: UserPreferencesRepository,
     private val playbackQueue: PlaybackQueueHolder,
     private val favoritesRepository: FavoritesRepository,
     private val epgRepository: EpgRepository,
+    private val previewResolver: PreviewStreamResolver,
+    private val previewPlayerFactory: PreviewPlayerFactory,
 ) : ViewModel() {
+
+    private val _previewUrl = MutableStateFlow<String?>(null)
+
+    /** URL of the muted preview currently playing behind the grid, if any. */
+    val previewUrl: StateFlow<String?> = _previewUrl.asStateFlow()
+
+    private var previewJob: Job? = null
+
+    // Held through its delegate so onCleared can tell whether a player was ever
+    // created — releasing a `by lazy` value would otherwise construct one just to
+    // throw it away, on every screen a user browsed with previews turned off.
+    private val previewPlayerDelegate = lazy { previewPlayerFactory.create() }
+
+    /** Created lazily so a user who never enables previews never pays for a decoder. */
+    val previewPlayer by previewPlayerDelegate
+
+    val preferences: StateFlow<UserPreferences> = preferencesRepository.preferences
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UserPreferences())
 
     private val visibleChannelIds = MutableStateFlow<List<String>>(emptyList())
 
@@ -103,7 +126,31 @@ class CatalogViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Starts or stops the preview.
+     *
+     * The dwell delay lives in the composable; by the time this is called the user has
+     * genuinely stopped on a channel. Resolving the stream still costs a database
+     * read, so the previous lookup is cancelled rather than left to race.
+     */
+    fun onPreviewTargetChanged(channelId: String?) {
+        previewJob?.cancel()
+        if (channelId == null) {
+            _previewUrl.value = null
+            return
+        }
+        previewJob = viewModelScope.launch {
+            _previewUrl.value = previewResolver.bestStreamUrl(channelId)
+        }
+    }
+
+    override fun onCleared() {
+        previewJob?.cancel()
+        if (previewPlayerDelegate.isInitialized()) previewPlayer.release()
+        super.onCleared()
+    }
+
     fun rememberHomeCountry(code: String) {
-        viewModelScope.launch { preferences.setHomeCountry(code) }
+        viewModelScope.launch { preferencesRepository.setHomeCountry(code) }
     }
 }

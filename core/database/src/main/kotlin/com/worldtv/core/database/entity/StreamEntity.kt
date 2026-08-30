@@ -81,24 +81,6 @@ data class RadioStationEntity(
     @ColumnInfo(defaultValue = "0") val updatedAt: Long = 0L,
 )
 
-/**
- * Cached YouTube live results.
- *
- * `expiresAt` is load-bearing rather than decorative: a live broadcast ends without
- * telling anyone, and a stale row shown as "live" sends the user to a dead player.
- * Entries past their expiry are hidden until the next refresh confirms them.
- */
-@Entity(tableName = "youtube_streams", indices = [Index("channelId"), Index("expiresAt")])
-data class YouTubeStreamEntity(
-    @PrimaryKey val videoId: String,
-    val channelId: String,
-    @ColumnInfo(defaultValue = "''") val channelTitle: String = "",
-    val title: String,
-    val thumbnailUrl: String?,
-    val fetchedAt: Long,
-    val expiresAt: Long,
-    @Embedded val health: HealthColumns = HealthColumns(),
-)
 
 fun HealthColumns.toModel(): HealthInfo = HealthInfo(
     state = enumValueOfOrDefault(state),

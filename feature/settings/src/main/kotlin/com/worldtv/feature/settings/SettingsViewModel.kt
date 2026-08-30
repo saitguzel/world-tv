@@ -45,9 +45,6 @@ class SettingsViewModel @Inject constructor(
 
     fun resyncCatalog() = syncTrigger.syncNow()
 
-    fun setYouTubeApiKey(key: String) =
-        viewModelScope.launch { preferences.setYouTubeApiKey(key) }
-
     /**
      * Re-checks everything, immediately.
      *

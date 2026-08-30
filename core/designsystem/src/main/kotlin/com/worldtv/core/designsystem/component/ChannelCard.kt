@@ -73,6 +73,8 @@ fun ChannelCard(
     state: ChannelCardState,
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
+    /** Reported so callers can drive focus-dependent behaviour such as preview. */
+    onFocusChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var focused by remember { mutableStateOf(false) }
@@ -96,7 +98,10 @@ fun ChannelCard(
                 scaleX = scale
                 scaleY = scale
             }
-            .onFocusChanged { focused = it.isFocused }
+            .onFocusChanged {
+                focused = it.isFocused
+                onFocusChanged(it.isFocused)
+            }
             .semantics { contentDescription = state.contentDescription() },
         // The scale animation above is ours, so the built-in one is switched off.
         scale = ClickableSurfaceScale.None,

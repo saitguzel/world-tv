@@ -56,7 +56,7 @@ enum class StreamKind {
     val isHttpProbeable: Boolean get() = this != NON_HTTP
 }
 
-/** Health bookkeeping shared by TV streams, radio stations and YouTube entries. */
+/** Health bookkeeping shared by TV streams and radio stations. */
 data class HealthInfo(
     val state: StreamState = StreamState.UNKNOWN,
     /** Epoch millis of the last completed check. 0 = never checked. */

@@ -95,11 +95,14 @@ fun PlayerScreen(
                 }
                 // While the drawer or overlay is open, its own focusable content
                 // owns the D-pad; intercepting here would steal navigation from it.
-                if (state.showChannelDrawer || state.showOverlay) {
+                if (state.showChannelDrawer || state.showOverlay || state.showTrackPicker) {
                     return@onPreviewKeyEvent when (event.toRemoteKey()) {
                         RemoteKey.Back -> {
-                            if (state.showChannelDrawer) viewModel.closeChannelDrawer()
-                            else viewModel.hideOverlay()
+                            when {
+                                state.showTrackPicker -> viewModel.closeTrackPicker()
+                                state.showChannelDrawer -> viewModel.closeChannelDrawer()
+                                else -> viewModel.hideOverlay()
+                            }
                             true
                         }
                         else -> false
@@ -131,6 +134,19 @@ fun PlayerScreen(
             LoadingBackdrop(
                 logoUrl = state.channel?.logoUrl,
                 modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        AnimatedVisibility(
+            visible = state.showTrackPicker,
+            enter = slideInHorizontally { -it },
+            exit = slideOutHorizontally { -it },
+            modifier = Modifier.align(Alignment.CenterStart),
+        ) {
+            TrackPicker(
+                subtitleTracks = state.subtitleTracks,
+                audioTracks = state.audioTracks,
+                onSelect = viewModel::selectTrack,
             )
         }
 
@@ -168,6 +184,9 @@ fun PlayerScreen(
                 state = state,
                 onToggleFavorite = viewModel::toggleFavorite,
                 onOpenChannelList = viewModel::openChannelDrawer,
+                onOpenTracks = viewModel::openTrackPicker,
+                hasTrackChoices = state.subtitleTracks.isNotEmpty() ||
+                    state.audioTracks.size > 1,
                 modifier = Modifier.focusRequester(overlayFocus),
             )
         }

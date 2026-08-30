@@ -231,10 +231,48 @@ ekranında.
 
 ---
 
+## I. YouTube neden kapsam dışı
+
+Faz 4 uygulandı, sonra araştırma sonrası **kaldırıldı**. Karar gerekçesi:
+
+**Kullanılabilir tek meşru yol WebView + IFrame Player API idi.** Resmî native
+YouTube Android Player API Mayıs 2023'te güvenlik açıkları nedeniyle kaldırıldı;
+Google'ın kendi tavsiyesi IFrame'e geçmek. yt-dlp tarzı manifest çıkarma ToS
+ihlali ve uygulamayı riske atar — baştan elendi.
+
+Ancak IFrame yolunun TV'de üç ciddi sorunu var:
+
+1. **Error 153.** 2025 sonundan beri YouTube gömülü oynatıcının kendini HTTP
+   `Referer` başlığıyla tanıtmasını zorunlu tutuyor. Android WebView bu başlığı
+   tarayıcı gibi göndermiyor ve error 153 yaygın bir başarısızlık hâline geldi.
+   Azaltmalar var (referrer policy meta etiketi, gerçek bir origin ile
+   `loadDataWithBaseURL`) ama hiçbiri garanti değil ve kırılma noktası bizim
+   kontrolümüzde değil.
+2. **Kalite 480p'ye kilitli.** Düz Android user agent'ında gömülü oynatıcı
+   `large` ve altına sınırlanıyor. Aşmak için desktop UA taklidi gerekiyor —
+   çalışıyor ama kırılgan ve YouTube'un istediği bir şey değil.
+3. **WebView maliyeti.** 1–2 GB'lık hedef kutularda ızgaranın yanında ikinci bir
+   render motoru çalıştırmak, uygulamanın geri kalanının bütün RAM bütçesiyle
+   çelişiyor.
+
+Değerlendirilen alternatif — **intent ile YouTube TV uygulamasına devretmek** —
+teknik olarak en iyisiydi (donanım kod çözme, 4K/HDR, kullanıcının hesabı, sıfır
+bakım) ama uygulamadan çıkmayı gerektiriyor ve çıplak AOSP kutularında YouTube
+uygulaması yok.
+
+**Karar:** YouTube tamamen çıkarıldı. Doküman Bölüm 4.3'ün kendisi
+"diğer ikisinden belirgin şekilde daha karmaşık" diyor; kota yönetimi, ToS
+yüzeyi, WebView bakımı ve error 153 riskinin tamamı, uygulamanın asıl değeri olan
+sağlık motoruna hiçbir şey katmıyor. `youtube_streams` tablosu da şemadan
+kaldırıldı — v1 yayınlanmadığı için migration gerekmiyor, ve ölü tablo taşımak
+yükümlülük.
+
+---
+
 ## G. Uygulanmayanlar (bilinçli)
 
-Tüm fazlar (1–5) tamamlandı. Kapsam dışı bırakılanlar, Bölüm 14'ün kendi
-listesinden:
+Faz 1–3 ve 5 tamamlandı; Faz 4 (YouTube) yukarıdaki gerekçeyle kapsam dışı.
+Ayrıca Bölüm 14'ün kendi listesinden:
 
 - **PiP, çoklu profil / bulut senkronizasyonu, kayıt / zaman kaydırma.**
 - **3D küre.** Kumandayla kullanışsız, GPU maliyeti yüksek.
@@ -243,14 +281,14 @@ Faz 5'te kurulan ama gerçek donanım gerektiren tek şey **Baseline Profile**:
 `:baselineprofile` modülü ve `generateBaselineProfile` görevi hazır, ancak
 profil rootlu bir emülatörde veya userdebug cihazda üretilmelidir.
 
-### Faz 4–5'te dokümandan sapılan noktalar
+### Faz 5'te dokümandan sapılan noktalar
 
 | Doküman | Uygulanan | Gerekçe |
 |---|---|---|
-| YouTube API anahtarı uygulamada | Ayarlardan kullanıcı giriyor | Gömülü anahtar paylaşılmış anahtardır: tek kullanıcı herkesin günlük kotasını tüketir, ve ikili dosyadan çıkarılabilir. |
-| `search` sonuçlarını 6 saat cache'le | Aynı + `expiresAt` ile *gizleme* | YouTube bir yayının bittiğini söylemiyor. Süresi dolmuş kaydı "canlı" göstermek kullanıcıyı ölü bir oynatıcıya yollar. |
 | EPG kanal başına | Kaynak (URL) başına | Bir XMLTV dosyası genelde bütün bir ülkeyi kapsıyor; kanal başına indirmek iki yüz indirme demek. |
 | — | Rehber saklama penceresi 1 gün geri / 2 gün ileri | `programmes` uygulamanın en hızlı büyüyen tablosu; yüz kanal × iki hafta milyon satırı aşıyor. |
+| Altyazı dili tam eşleşme | Ana alt etikete göre eşleşme | IPTV yayınları `tur`/`tr`/`tr-TR`'yi birbirinin yerine kullanıyor; tam eşleşme çoğu gerçek yayında hiçbir şey seçmez. |
+| Kanal önizleme | 1,2 sn bekleme + yalnızca `OK` yayınlar | Beklemesiz önizleme bir sıra boyunca kart başına bağlantı açar — restreamer'ın IP banlamasının en hızlı yolu. |
 
 ---
 

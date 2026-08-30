@@ -13,8 +13,8 @@ patladığında aynı kanalın alternatifine sessizce geçer.
 | 1 | Modül yapısı, Room şeması, iptv-org senkronizasyonu, katalog UI, ExoPlayer | ✅ |
 | 2 | Sağlık motoru: Kademe 1+2, durum makinesi, sweep worker, tembel doğrulama, oynatma anında düşürme | ✅ |
 | 3 | Radyo + MediaSessionService, favoriler, arama, son izlenenler, ayarlar | ✅ |
-| 4 | YouTube (WebView + IFrame API, D-pad köprüsü, kürate liste) | ✅ |
-| 5 | Baseline Profile, EPG (XMLTV), Assistant ile sesli arama, kanal önizleme | ✅ |
+| 4 | YouTube | ⛔ kapsam dışı bırakıldı — [gerekçe](ARCHITECTURE-REVIEW.md#i-youtube-neden-kapsam-dışı) |
+| 5 | Baseline Profile, EPG (XMLTV), Assistant ile sesli arama, kanal önizleme, altyazı/ses seçimi | ✅ |
 
 Mimari incelemesi ve dokümandan sapmaların gerekçeleri:
 [`ARCHITECTURE-REVIEW.md`](ARCHITECTURE-REVIEW.md).
@@ -38,9 +38,8 @@ Browse      Kalıcı ülke çekmecesi + kanal ızgarası (paging)
 Search      Sesli arama → kademeli filtreleme → alfabetik ızgara klavye
 Player      Tam ekran · zap (yukarı/aşağı) · yan kanal çekmecesi (sağ/sol)
 Favorites   Favori ızgarası, uzun basma ile çıkarma
-Radio       İstasyon listesi, MediaSessionService ile arka planda çalma
-YouTube     Kürate kanallardaki canlı yayınlar + IFrame oynatıcı
-Settings    Filtreler · sağlık yoğunluğu · önizleme · API anahtarı · katalogu yenile
+Radio       Ülke çekmecesi + istasyon listesi, MediaSessionService ile arka planda çalma
+Settings    Filtreler · sağlık yoğunluğu · önizleme · katalogu yenile
 ```
 
 Gezinme derinliği en fazla iki: her ekran ana ekrandan bir sıçrama uzakta.
@@ -76,18 +75,20 @@ akışı saatlerce kaydırır, bu yüzden `XmltvTime` elle yazıldı ve kapsaml�
 Saklama penceresi dar tutuldu (1 gün geriye, 2 gün ileriye) — `programmes` uygulamanın
 en hızlı büyüyen tablosu ve dünün akışının hiçbir faydası yok.
 
-## YouTube
+## Altyazı ve ses parçası
 
-ExoPlayer YouTube'u doğrudan oynatamaz. YouTube'dan HLS manifest çıkarmak daha kolay
-olurdu ama ToS ihlali; bunun yerine resmî **IFrame Player API** bir WebView içinde
-kullanılıyor. WebView bilinçli olarak odaklanamaz durumda: kumanda bir kez WebView'e
-girerse kendi tuş işleme mantığı devralır ve geri çıkmanın güvenilir bir yolu yoktur.
-Tuşlar Compose katmanında yakalanıp JS komutu olarak köprüleniyor.
+Sistemin altyazı tercihi (`CaptioningManager`) uygulanıyor — TV'de erişilebilirlik
+ayarları telefondakinden daha çok kullanılıyor, altyazı ortak oturma odasında yaygın
+bir özellik. Dil eşleşmesi ana alt etikete göre: IPTV yayınları `tur`/`tr`/`tr-TR`
+etiketlerini birbirinin yerine kullanıyor, tam eşleşme çoğu gerçek yayında hiçbir şey
+seçmez.
 
-Keşif, 6 saatlik döngüde kürate edilmiş 16 kanalla sınırlı: `search.list` çağrısı
-günlük 10.000 birimlik kotadan **100 birim** yiyor. API anahtarı APK'ya gömülmüyor,
-ayarlardan kullanıcı giriyor — gömülü anahtar paylaşılmış anahtardır: tek kullanıcı
-herkesin kotasını tüketir ve ikili dosyadan çıkarılabilir.
+## Kanal önizleme
+
+Odaklanınca hemen değil, 1,2 sn bekledikten sonra. Beklemesiz haliyle bir sıra boyunca
+yürümek kart başına bir bağlantı açıp terk eder. Önizleme yalnızca `OK` durumundaki
+yayınları kullanıyor ve ses kod çözücü seviyesinde kapalı — sadece susturulmuş bir
+oynatıcı yine ses odağı alır ve kullanıcının dinlediği radyoyu susturur.
 
 ## Modüller
 
@@ -101,7 +102,7 @@ herkesin kotasını tüketir ve ikili dosyadan çıkarılabilir.
 :data:health          ★ Sağlık kontrol motoru — saf Kotlin/JVM, hızlı testler
 :data:repository      Repository implementasyonları, Room ↔ sağlık motoru köprüsü
 :data:sync            Katalog senkronizasyonu, WorkManager işleri
-:feature:*            catalog, player, radio, favorites, settings, youtube
+:feature:*            catalog, player, radio, favorites, settings
 :baselineprofile      Macrobenchmark ile baseline profile üretimi
 ```
 

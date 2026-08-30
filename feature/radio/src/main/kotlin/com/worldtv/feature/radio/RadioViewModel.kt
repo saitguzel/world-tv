@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.worldtv.core.model.Country
 import com.worldtv.core.model.RadioStation
 import com.worldtv.data.repository.FavoritesRepository
+import com.worldtv.data.repository.ChannelRepository
 import com.worldtv.data.repository.RadioRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -24,6 +27,7 @@ class RadioViewModel @Inject constructor(
     private val radioRepository: RadioRepository,
     private val favoritesRepository: FavoritesRepository,
     private val controller: RadioController,
+    private val channelRepository: ChannelRepository,
 ) : ViewModel() {
 
     val nowPlaying: StateFlow<RadioStation?> = controller.nowPlaying
@@ -32,8 +36,22 @@ class RadioViewModel @Inject constructor(
     private val _country = MutableStateFlow<String?>(null)
     val country: StateFlow<String?> = _country.asStateFlow()
 
-    val availableCountries: StateFlow<List<String>> = radioRepository.availableCountries()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    /**
+     * Countries that actually have stations, named and flagged.
+     *
+     * Radio Browser returns bare ISO codes; joining them against the catalog's country
+     * table is what turns a list of "TR, US, GB" into something readable from three
+     * metres away.
+     */
+    val availableCountries: StateFlow<List<Country>> = combine(
+        radioRepository.availableCountries(),
+        channelRepository.countries(),
+    ) { codes, countries ->
+        val byCode = countries.associateBy { it.code }
+        codes.mapNotNull { code ->
+            byCode[code] ?: Country(code = code, name = code, flag = "", languages = emptyList())
+        }.sortedBy { it.name }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val stations: Flow<PagingData<RadioStation>> = _country

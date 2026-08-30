@@ -118,6 +118,8 @@ fun PlayerControls(
     state: PlayerUiState,
     onToggleFavorite: () -> Unit,
     onOpenChannelList: () -> Unit,
+    onOpenTracks: () -> Unit = {},
+    hasTrackChoices: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val firstButton = remember { FocusRequester() }
@@ -140,6 +142,13 @@ fun PlayerControls(
         }
         Button(onClick = onOpenChannelList) {
             Text("Kanal listesi")
+        }
+        // Hidden entirely when the stream carries nothing to choose between, rather
+        // than shown disabled — a dead button still costs a D-pad press to skip.
+        if (hasTrackChoices) {
+            Button(onClick = onOpenTracks) {
+                Text("Altyazı ve ses")
+            }
         }
     }
 }

@@ -4,10 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.ExoPlayer
 import com.worldtv.core.model.Channel
 import com.worldtv.core.model.ChannelQueue
+import com.worldtv.core.common.CaptionSettings
 import com.worldtv.core.model.ChannelSummary
+import com.worldtv.core.model.MediaTrack
+import com.worldtv.core.model.TrackType
 import com.worldtv.core.model.NowNext
 import com.worldtv.core.model.Stream
 import com.worldtv.core.model.StreamState
@@ -48,6 +52,9 @@ data class PlayerUiState(
     val unavailable: Boolean = false,
     val isFavorite: Boolean = false,
     val showChannelDrawer: Boolean = false,
+    val showTrackPicker: Boolean = false,
+    val subtitleTracks: List<MediaTrack> = emptyList(),
+    val audioTracks: List<MediaTrack> = emptyList(),
 )
 
 @HiltViewModel
@@ -58,6 +65,7 @@ class PlayerViewModel @Inject constructor(
     private val epgRepository: EpgRepository,
     private val playerFactory: PlayerFactory,
     private val playbackQueue: PlaybackQueueHolder,
+    private val captionSettings: CaptionSettings,
     private val time: TimeProvider,
 ) : ViewModel() {
 
@@ -91,7 +99,22 @@ class PlayerViewModel @Inject constructor(
         .flatMapLatest { ids -> channelRepository.summaries(ids) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(1_000), emptyList())
 
-    val player: ExoPlayer by lazy { playerFactory.create().also { it.addListener(listener) } }
+    val player: ExoPlayer by lazy {
+        playerFactory.create().also { exoPlayer ->
+            exoPlayer.addListener(listener)
+            // Standing preference applied before anything loads, since the stream's
+            // tracks are not known yet.
+            TrackController.applyInitialPreferences(
+                player = exoPlayer,
+                captionsEnabled = captionSettings.isEnabled,
+                captionLanguage = captionSettings.preferredLanguage,
+                deviceLanguage = captionSettings.deviceLanguage,
+            )
+        }
+    }
+
+    /** Latest track set reported by the player, needed to apply a selection. */
+    private var currentTracks: Tracks = Tracks.EMPTY
 
     private var streams: List<Stream> = emptyList()
     private var streamIndex = 0
@@ -135,6 +158,16 @@ class PlayerViewModel @Inject constructor(
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             _uiState.update { it.copy(isBuffering = playbackState == Player.STATE_BUFFERING) }
+        }
+
+        override fun onTracksChanged(tracks: Tracks) {
+            currentTracks = tracks
+            _uiState.update {
+                it.copy(
+                    subtitleTracks = TrackController.optionsOf(tracks, TrackType.TEXT),
+                    audioTracks = TrackController.optionsOf(tracks, TrackType.AUDIO),
+                )
+            }
         }
     }
 
@@ -271,6 +304,16 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun toggleOverlay() = _uiState.update { it.copy(showOverlay = !it.showOverlay) }
+
+    fun openTrackPicker() =
+        _uiState.update { it.copy(showTrackPicker = true, showOverlay = false) }
+
+    fun closeTrackPicker() = _uiState.update { it.copy(showTrackPicker = false) }
+
+    fun selectTrack(track: MediaTrack) {
+        TrackController.select(player, currentTracks, track)
+        closeTrackPicker()
+    }
 
     fun openChannelDrawer() = _uiState.update { it.copy(showChannelDrawer = true, showOverlay = false) }
 

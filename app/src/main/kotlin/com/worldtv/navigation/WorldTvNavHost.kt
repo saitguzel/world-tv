@@ -19,8 +19,6 @@ import com.worldtv.feature.favorites.FavoritesScreen
 import com.worldtv.feature.player.PlayerScreen
 import com.worldtv.feature.radio.RadioScreen
 import com.worldtv.feature.settings.SettingsScreen
-import com.worldtv.feature.youtube.YouTubeBrowseScreen
-import com.worldtv.feature.youtube.YouTubePlayerScreen
 
 /**
  * Navigation graph.
@@ -37,15 +35,11 @@ object Routes {
     const val FAVORITES = "favorites"
     const val SETTINGS = "settings"
     const val PLAYER = "player/{channelId}"
-    const val YOUTUBE = "youtube"
-    const val YOUTUBE_PLAYER = "youtube/{videoId}"
 
     fun browse(country: String? = null): String =
         if (country == null) "browse" else "browse?country=$country"
 
     fun player(channelId: String) = "player/$channelId"
-
-    fun youTubePlayer(videoId: String) = "youtube/$videoId"
 }
 
 @Composable
@@ -74,7 +68,6 @@ fun WorldTvNavHost(
                 onSearch = { navController.navigate(Routes.SEARCH) },
                 onRadio = { navController.navigate(Routes.RADIO) },
                 onFavorites = { navController.navigate(Routes.FAVORITES) },
-                onYouTube = { navController.navigate(Routes.YOUTUBE) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
                 onCountrySelected = { code -> navController.navigate(Routes.browse(code)) },
             )
@@ -115,24 +108,6 @@ fun WorldTvNavHost(
             SettingsScreen()
         }
 
-        composable(Routes.YOUTUBE) {
-            YouTubeBrowseScreen(
-                onVideoSelected = { videoId ->
-                    navController.navigate(Routes.youTubePlayer(videoId))
-                },
-                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-            )
-        }
-
-        composable(
-            route = Routes.YOUTUBE_PLAYER,
-            arguments = listOf(navArgument("videoId") { type = NavType.StringType }),
-        ) { entry ->
-            YouTubePlayerScreen(
-                videoId = entry.arguments?.getString("videoId").orEmpty(),
-                onBack = { navController.popBackStack() },
-            )
-        }
 
         composable(
             route = Routes.PLAYER,

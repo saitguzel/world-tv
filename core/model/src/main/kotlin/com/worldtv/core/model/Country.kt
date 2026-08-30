@@ -16,5 +16,5 @@ data class Category(
     val channelCount: Int = 0,
 )
 
-/** Top-level mode of the app. YouTube is present in the model but gated off until phase 4. */
-enum class MediaMode { TV, RADIO, YOUTUBE }
+/** Top-level mode of the app. */
+enum class MediaMode { TV, RADIO }

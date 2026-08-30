@@ -48,7 +48,6 @@ fun HomeScreen(
     onSearch: () -> Unit,
     onRadio: () -> Unit,
     onFavorites: () -> Unit,
-    onYouTube: () -> Unit,
     onSettings: () -> Unit,
     onCountrySelected: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -121,7 +120,6 @@ fun HomeScreen(
                 Button(onClick = onBrowse) { Text("TV") }
                 Button(onClick = onRadio) { Text("Radyo") }
                 Button(onClick = onSearch) { Text("Ara") }
-                Button(onClick = onYouTube) { Text("YouTube") }
                 Button(onClick = onFavorites) { Text("Favoriler") }
                 Button(onClick = onSettings) { Text("Ayarlar") }
             }

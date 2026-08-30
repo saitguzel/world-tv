@@ -7,7 +7,6 @@ import com.worldtv.core.database.dao.EpgDao
 import com.worldtv.core.database.dao.RadioDao
 import com.worldtv.core.database.dao.StreamDao
 import com.worldtv.core.database.dao.UserDataDao
-import com.worldtv.core.database.dao.YouTubeDao
 import com.worldtv.core.database.entity.BlocklistEntity
 import com.worldtv.core.database.entity.CategoryEntity
 import com.worldtv.core.database.entity.ChannelEntity
@@ -20,7 +19,6 @@ import com.worldtv.core.database.entity.ProgrammeEntity
 import com.worldtv.core.database.entity.RecentEntity
 import com.worldtv.core.database.entity.StreamEntity
 import com.worldtv.core.database.entity.SyncStateEntity
-import com.worldtv.core.database.entity.YouTubeStreamEntity
 
 @Database(
     entities = [
@@ -33,7 +31,6 @@ import com.worldtv.core.database.entity.YouTubeStreamEntity
         RecentEntity::class,
         DeviceBlacklistEntity::class,
         RadioStationEntity::class,
-        YouTubeStreamEntity::class,
         SyncStateEntity::class,
         ProgrammeEntity::class,
         EpgSourceEntity::class,
@@ -46,7 +43,6 @@ abstract class WorldTvDatabase : RoomDatabase() {
     abstract fun streamDao(): StreamDao
     abstract fun radioDao(): RadioDao
     abstract fun userDataDao(): UserDataDao
-    abstract fun youTubeDao(): YouTubeDao
     abstract fun epgDao(): EpgDao
 
     companion object {
