@@ -42,6 +42,7 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import coil3.size.Size
 import com.worldtv.core.designsystem.R
 import com.worldtv.core.designsystem.theme.LocalReduceMotion
