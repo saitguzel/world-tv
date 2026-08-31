@@ -19,6 +19,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.worldtv.feature.catalog.mobile.MobileBrowseScreen
+import com.worldtv.feature.catalog.mobile.MobileHomeScreen
+import com.worldtv.feature.catalog.mobile.MobileSearchScreen
 import com.worldtv.feature.favorites.mobile.MobileFavoritesScreen
 import com.worldtv.feature.settings.mobile.MobileSettingsScreen
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +51,13 @@ fun MobileNavHost(
     }
 
     NavHost(navController = navController, startDestination = Routes.HOME) {
-        composable(Routes.HOME) { ComingSoon("Ana ekran") }
+        composable(Routes.HOME) {
+            MobileHomeScreen(
+                onChannelSelected = { navController.navigate(Routes.player(it)) },
+                onCountrySelected = { navController.navigate(Routes.browse(it)) },
+                onSettings = { navController.navigate(Routes.SETTINGS) },
+            )
+        }
 
         composable(
             route = Routes.BROWSE,
@@ -67,7 +75,12 @@ fun MobileNavHost(
             )
         }
 
-        composable(Routes.SEARCH) { ComingSoon("Ara") }
+        composable(Routes.SEARCH) {
+            MobileSearchScreen(
+                onChannelSelected = { navController.navigate(Routes.player(it)) },
+                initialQuery = pendingVoiceQuery,
+            )
+        }
         composable(Routes.RADIO) { ComingSoon("Radyo") }
         composable(Routes.FAVORITES) {
             MobileFavoritesScreen(
