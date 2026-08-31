@@ -27,6 +27,7 @@ dependencies {
     implementation(projects.core.common)
     implementation(projects.core.designsystem)
     implementation(projects.core.designsystemTv)
+    implementation(projects.core.designsystemMobile)
     implementation(projects.data.repository)
 
     implementation(platform(libs.androidx.compose.bom))

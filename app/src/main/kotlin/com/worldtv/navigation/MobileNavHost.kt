@@ -18,6 +18,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.worldtv.feature.favorites.mobile.MobileFavoritesScreen
+import com.worldtv.feature.settings.mobile.MobileSettingsScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -64,8 +66,14 @@ fun MobileNavHost(
 
         composable(Routes.SEARCH) { ComingSoon("Ara") }
         composable(Routes.RADIO) { ComingSoon("Radyo") }
-        composable(Routes.FAVORITES) { ComingSoon("Favoriler") }
-        composable(Routes.SETTINGS) { ComingSoon("Ayarlar") }
+        composable(Routes.FAVORITES) {
+            MobileFavoritesScreen(
+                onChannelSelected = { navController.navigate(Routes.player(it)) },
+            )
+        }
+        composable(Routes.SETTINGS) {
+            MobileSettingsScreen(onBack = { navController.popBackStack() })
+        }
 
         composable(
             route = Routes.PLAYER,
