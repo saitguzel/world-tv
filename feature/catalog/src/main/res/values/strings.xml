@@ -32,4 +32,12 @@
     <string name="keyboard_space">Boşluk</string>
     <string name="keyboard_delete">Sil</string>
     <string name="keyboard_clear">Temizle</string>
+
+    <!-- Phone browse: the country list is a sheet rather than a permanent side rail. -->
+    <string name="browse_filter">Filtrele</string>
+    <string name="browse_all_channels">Tüm kanallar</string>
+    <string name="browse_country_search">Ülke ara</string>
+    <string name="browse_favorite_removed">Favorilerden çıkarıldı</string>
+    <string name="browse_favorite_added">Favorilere eklendi</string>
+    <string name="browse_undo">Geri al</string>
 </resources>

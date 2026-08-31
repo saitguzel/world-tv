@@ -18,6 +18,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.worldtv.feature.catalog.mobile.MobileBrowseScreen
 import com.worldtv.feature.favorites.mobile.MobileFavoritesScreen
 import com.worldtv.feature.settings.mobile.MobileSettingsScreen
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,8 +61,10 @@ fun MobileNavHost(
                 },
             ),
         ) { entry ->
-            val country = entry.arguments?.getString("country")
-            ComingSoon(if (country == null) "Keşfet" else "Keşfet — $country")
+            MobileBrowseScreen(
+                initialCountry = entry.arguments?.getString("country"),
+                onChannelSelected = { navController.navigate(Routes.player(it)) },
+            )
         }
 
         composable(Routes.SEARCH) { ComingSoon("Ara") }
