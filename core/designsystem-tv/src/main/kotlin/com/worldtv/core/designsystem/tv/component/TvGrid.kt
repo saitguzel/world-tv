@@ -1,4 +1,4 @@
-package com.worldtv.core.designsystem.component
+package com.worldtv.core.designsystem.tv.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusGroup
@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRestorer
-import com.worldtv.core.designsystem.focus.rememberTvPivotSpec
+import com.worldtv.core.designsystem.tv.focus.rememberTvPivotSpec
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 
 /**

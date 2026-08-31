@@ -1,4 +1,4 @@
-package com.worldtv.core.designsystem.focus
+package com.worldtv.core.designsystem.tv.focus
 
 import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.ui.input.key.KeyEvent

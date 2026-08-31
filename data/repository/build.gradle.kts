@@ -35,3 +35,5 @@ dependencies {
     testImplementation(libs.turbine)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
+
+tasks.withType<Test>().configureEach { useJUnitPlatform() }

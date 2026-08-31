@@ -24,10 +24,10 @@ import android.speech.RecognizerIntent
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.worldtv.core.designsystem.component.ChannelCard
-import com.worldtv.core.designsystem.component.TvChannelGrid
+import com.worldtv.core.designsystem.tv.component.ChannelCard
+import com.worldtv.core.designsystem.tv.component.TvChannelGrid
 import com.worldtv.core.designsystem.component.toCardState
-import com.worldtv.core.designsystem.component.TvShelf
+import com.worldtv.core.designsystem.tv.component.TvShelf
 import com.worldtv.core.model.ChannelSummary
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens

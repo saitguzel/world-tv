@@ -23,7 +23,7 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.component.HealthDot
-import com.worldtv.core.designsystem.component.LoadingState
+import com.worldtv.core.designsystem.tv.component.LoadingState
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.core.model.HealthBadge

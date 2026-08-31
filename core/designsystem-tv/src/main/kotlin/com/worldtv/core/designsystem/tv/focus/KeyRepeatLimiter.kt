@@ -1,4 +1,4 @@
-package com.worldtv.core.designsystem.focus
+package com.worldtv.core.designsystem.tv.focus
 
 import android.os.SystemClock
 import androidx.compose.runtime.Composable

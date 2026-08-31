@@ -1,4 +1,4 @@
-package com.worldtv.core.designsystem.focus
+package com.worldtv.core.designsystem.tv.focus
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.BringIntoViewSpec

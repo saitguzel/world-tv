@@ -18,10 +18,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.worldtv.core.designsystem.component.ChannelCard
-import com.worldtv.core.designsystem.component.EmptyState
-import com.worldtv.core.designsystem.component.LoadingState
-import com.worldtv.core.designsystem.component.TvChannelGrid
+import com.worldtv.core.designsystem.tv.component.ChannelCard
+import com.worldtv.core.designsystem.tv.component.EmptyState
+import com.worldtv.core.designsystem.tv.component.LoadingState
+import com.worldtv.core.designsystem.tv.component.TvChannelGrid
 import com.worldtv.core.designsystem.component.toCardState
 import androidx.compose.ui.res.stringResource
 import com.worldtv.feature.catalog.R

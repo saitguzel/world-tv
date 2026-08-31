@@ -13,9 +13,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import com.worldtv.core.designsystem.R
+import com.worldtv.core.designsystem.theme.LocalWorldTvTypeScale
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.model.Programme
 
@@ -33,9 +32,9 @@ fun NowPlayingLine(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
+        WorldTvText(
             text = programme.title,
-            style = MaterialTheme.typography.labelLarge,
+            style = LocalWorldTvTypeScale.current.labelLarge,
             color = WorldTvColors.OnSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -75,18 +74,18 @@ fun NowNextBlock(
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         now?.let { programme ->
-            Text(
+            WorldTvText(
                 text = programme.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = LocalWorldTvTypeScale.current.titleMedium,
                 color = WorldTvColors.OnSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             ProgressBar(fraction = programme.progressAt(instant))
             programme.description?.let { description ->
-                Text(
+                WorldTvText(
                     text = description,
-                    style = MaterialTheme.typography.labelLarge,
+                    style = LocalWorldTvTypeScale.current.labelLarge,
                     color = WorldTvColors.OnSurfaceMuted,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -94,9 +93,9 @@ fun NowNextBlock(
             }
         }
         next?.let { programme ->
-            Text(
+            WorldTvText(
                 text = stringResource(R.string.programme_next, programme.title),
-                style = MaterialTheme.typography.labelLarge,
+                style = LocalWorldTvTypeScale.current.labelLarge,
                 color = WorldTvColors.OnSurfaceMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

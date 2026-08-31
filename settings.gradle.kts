@@ -31,6 +31,7 @@ include(":core:common")
 include(":core:database")
 include(":core:network")
 include(":core:designsystem")
+include(":core:designsystem-tv")
 
 include(":data:health")
 include(":data:repository")

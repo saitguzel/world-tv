@@ -1,4 +1,4 @@
-package com.worldtv.core.designsystem.component
+package com.worldtv.core.designsystem.tv.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

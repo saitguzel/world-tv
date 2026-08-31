@@ -24,12 +24,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.worldtv.core.designsystem.component.ChannelCard
+import com.worldtv.core.designsystem.tv.component.ChannelCard
 import com.worldtv.core.designsystem.component.toCardState
 import com.worldtv.core.designsystem.component.DoubleBackToExit
-import com.worldtv.core.designsystem.component.EmptyState
-import com.worldtv.core.designsystem.component.LoadingState
-import com.worldtv.core.designsystem.component.TvShelf
+import com.worldtv.core.designsystem.tv.component.EmptyState
+import com.worldtv.core.designsystem.tv.component.LoadingState
+import com.worldtv.core.designsystem.tv.component.TvShelf
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.core.model.ChannelSummary

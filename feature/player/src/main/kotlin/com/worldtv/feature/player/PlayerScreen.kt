@@ -31,9 +31,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.worldtv.core.designsystem.focus.RemoteKey
-import com.worldtv.core.designsystem.focus.rememberKeyRepeatLimiter
-import com.worldtv.core.designsystem.focus.toRemoteKey
+import com.worldtv.core.designsystem.tv.focus.RemoteKey
+import com.worldtv.core.designsystem.tv.focus.rememberKeyRepeatLimiter
+import com.worldtv.core.designsystem.tv.focus.toRemoteKey
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import androidx.compose.ui.res.stringResource
 import com.worldtv.feature.player.R
