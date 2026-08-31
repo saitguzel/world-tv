@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.worldtv.core.model.Channel
 import com.worldtv.core.model.ChannelQueue
@@ -241,6 +242,11 @@ class PlayerViewModel @Inject constructor(
         healthRepository.verifyVisibleChannels(viewModelScope, neighbours)
     }
 
+    // MediaSource, and so setMediaSource and createMediaSource with it, is
+    // @UnstableApi. This is the only place the view model reaches past media3's
+    // stable Player surface; everything else here is Player, Tracks and
+    // PlaybackException, which are stable.
+    @androidx.annotation.OptIn(markerClass = [UnstableApi::class])
     private fun playCurrentStream() {
         val stream = streams.getOrNull(streamIndex) ?: run {
             _uiState.update { it.copy(unavailable = true, isBuffering = false) }
