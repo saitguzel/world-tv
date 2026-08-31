@@ -14,6 +14,7 @@ import com.worldtv.data.sync.SyncScheduler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import okhttp3.OkHttpClient
+import okio.Path.Companion.toOkioPath
 
 @HiltAndroidApp
 class WorldTvApplication : Application(), Configuration.Provider, SingletonImageLoader.Factory {
@@ -54,7 +55,7 @@ class WorldTvApplication : Application(), Configuration.Provider, SingletonImage
             }
             .diskCache {
                 DiskCache.Builder()
-                    .directory(cacheDir.resolve("image_cache"))
+                    .directory(cacheDir.resolve("image_cache").toOkioPath())
                     .maxSizeBytes(64L * 1024 * 1024)
                     .build()
             }
