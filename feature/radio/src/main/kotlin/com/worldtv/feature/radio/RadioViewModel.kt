@@ -80,10 +80,10 @@ class RadioViewModel @Inject constructor(
 
     fun togglePlayPause() = controller.togglePlayPause()
 
-    override fun onCleared() {
-        // The controller is released, but playback is not stopped: leaving the radio
-        // screen must not silence the radio — that is the whole point of the mode.
-        controller.release()
-        super.onCleared()
-    }
+    // Deliberately no onCleared override. RadioController is a @Singleton whose
+    // connection is meant to outlive any one screen: releasing it here dropped the
+    // MediaController every time the user left the radio screen, forcing a reconnect
+    // on the way back and — once a now-playing bar exists outside this screen —
+    // breaking it outright. Playback itself was never stopped here either, so nothing
+    // about the "leaving radio must not silence radio" contract changes.
 }

@@ -22,6 +22,7 @@ import com.worldtv.feature.catalog.mobile.MobileBrowseScreen
 import com.worldtv.feature.catalog.mobile.MobileHomeScreen
 import com.worldtv.feature.catalog.mobile.MobileSearchScreen
 import com.worldtv.feature.favorites.mobile.MobileFavoritesScreen
+import com.worldtv.feature.radio.mobile.MobileRadioScreen
 import com.worldtv.feature.settings.mobile.MobileSettingsScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -81,7 +82,7 @@ fun MobileNavHost(
                 initialQuery = pendingVoiceQuery,
             )
         }
-        composable(Routes.RADIO) { ComingSoon("Radyo") }
+        composable(Routes.RADIO) { MobileRadioScreen() }
         composable(Routes.FAVORITES) {
             MobileFavoritesScreen(
                 onChannelSelected = { navController.navigate(Routes.player(it)) },

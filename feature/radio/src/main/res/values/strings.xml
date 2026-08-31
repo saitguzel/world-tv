@@ -9,4 +9,10 @@
     <string name="radio_all_countries">Tümü</string>
     <!-- Prefix marking a favourited station in the list. -->
     <string name="radio_favorite_marker">★ %1$s</string>
+
+    <!-- Phone radio: the country rail becomes a sheet, and the remote's media keys
+         have no equivalent, so playback needs on-screen controls. -->
+    <string name="radio_filter">Ülke seç</string>
+    <string name="radio_play">Çal</string>
+    <string name="radio_pause">Duraklat</string>
 </resources>

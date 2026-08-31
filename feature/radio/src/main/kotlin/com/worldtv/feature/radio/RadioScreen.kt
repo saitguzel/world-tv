@@ -153,19 +153,3 @@ private fun StationRow(
     )
 }
 
-private fun RadioStation.describe(): String = buildList {
-    codec?.let(::add)
-    if (bitrate > 0) add("$bitrate kbps")
-    if (tags.isNotEmpty()) add(tags.take(2).joinToString(", "))
-}.joinToString(" · ")
-
-/**
- * Radio Browser runs its own health checks from a different region, so a station it
- * calls broken is shown as unchecked rather than verified until our own probe agrees.
- */
-private fun RadioStation.badge(): HealthBadge = when {
-    health.state == StreamState.DEAD -> HealthBadge.UNAVAILABLE
-    health.state == StreamState.OK -> HealthBadge.VERIFIED
-    health.state == StreamState.GEO_BLOCKED -> HealthBadge.GEO_BLOCKED
-    else -> HealthBadge.UNCHECKED
-}
