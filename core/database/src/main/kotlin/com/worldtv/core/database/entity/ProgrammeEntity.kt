@@ -3,6 +3,7 @@ package com.worldtv.core.database.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.worldtv.core.model.Programme
 
 /**
  * One EPG entry.
@@ -39,4 +40,29 @@ data class EpgSourceEntity(
     val url: String,
     val language: String?,
     val lastFetchedAt: Long,
+)
+
+/**
+ * The model/entity mappers live beside the entity, next to HealthColumns.toModel(),
+ * so the repository that reads programmes and the synchronizer that writes them share
+ * one definition rather than each keeping its own.
+ */
+fun ProgrammeEntity.toModel(): Programme = Programme(
+    channelId = channelId,
+    startAt = startAt,
+    endAt = endAt,
+    title = title,
+    description = description,
+    category = category,
+    episode = episode,
+)
+
+fun Programme.toEntity(): ProgrammeEntity = ProgrammeEntity(
+    channelId = channelId,
+    startAt = startAt,
+    endAt = endAt,
+    title = title,
+    description = description,
+    category = category,
+    episode = episode,
 )

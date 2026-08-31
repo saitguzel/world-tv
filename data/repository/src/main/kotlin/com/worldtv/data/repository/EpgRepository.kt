@@ -3,6 +3,7 @@ package com.worldtv.data.repository
 import com.worldtv.core.common.di.IoDispatcher
 import com.worldtv.core.database.dao.EpgDao
 import com.worldtv.core.database.entity.ProgrammeEntity
+import com.worldtv.core.database.entity.toModel
 import com.worldtv.core.model.NowNext
 import com.worldtv.core.model.Programme
 import com.worldtv.core.model.TimeProvider
@@ -56,23 +57,3 @@ class EpgRepository @Inject constructor(
 
     suspend fun hasGuideData(): Boolean = withContext(io) { dao.count() > 0 }
 }
-
-internal fun ProgrammeEntity.toModel(): Programme = Programme(
-    channelId = channelId,
-    startAt = startAt,
-    endAt = endAt,
-    title = title,
-    description = description,
-    category = category,
-    episode = episode,
-)
-
-internal fun Programme.toEntity(): ProgrammeEntity = ProgrammeEntity(
-    channelId = channelId,
-    startAt = startAt,
-    endAt = endAt,
-    title = title,
-    description = description,
-    category = category,
-    episode = episode,
-)

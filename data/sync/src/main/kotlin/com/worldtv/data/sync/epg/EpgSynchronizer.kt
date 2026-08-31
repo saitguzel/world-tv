@@ -11,7 +11,7 @@ import com.worldtv.core.network.CatalogFetch
 import com.worldtv.core.network.api.IptvOrgApi
 import com.worldtv.core.network.di.ApiClient
 import com.worldtv.core.network.model.ApiGuide
-import com.worldtv.data.repository.toEntity
+import com.worldtv.core.database.entity.toEntity
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
