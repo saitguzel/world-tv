@@ -56,15 +56,6 @@
                 android:resource="@xml/searchable" />
         </activity>
 
-        <service
-            android:name="com.worldtv.feature.radio.RadioPlaybackService"
-            android:exported="true"
-            android:foregroundServiceType="mediaPlayback">
-            <intent-filter>
-                <action android:name="androidx.media3.session.MediaSessionService" />
-            </intent-filter>
-        </service>
-
         <!-- Hilt supplies the WorkerFactory, so the default WorkManager initializer
              must be removed and replaced by on-demand initialisation. -->
         <provider

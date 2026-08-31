@@ -70,8 +70,11 @@ jobs:
       - name: Assemble
         run: ./gradlew --no-daemon assembleDebug
 
+      # --continue so every module's lint runs even after one fails. Without it the
+      # build stops at the first failing module and a run only ever reveals one
+      # module's findings; the exit code, and so the gate, is unchanged.
       - name: Lint
-        run: ./gradlew --no-daemon lintDebug
+        run: ./gradlew --no-daemon --continue lintDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
