@@ -3,6 +3,7 @@ package com.worldtv.feature.radio
 import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -24,6 +25,9 @@ class RadioPlaybackService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
 
+    // setWakeMode is @UnstableApi; the audio attributes and MediaSession around it
+    // are stable, so the opt-in stays on this one method.
+    @androidx.annotation.OptIn(markerClass = [UnstableApi::class])
     override fun onCreate() {
         super.onCreate()
         val player = ExoPlayer.Builder(this)

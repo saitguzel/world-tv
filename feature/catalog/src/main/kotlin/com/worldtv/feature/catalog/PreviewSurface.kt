@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.compose.PlayerSurface
@@ -23,6 +24,9 @@ import javax.inject.Singleton
  * this one trades buffer for latency, because a preview that takes four seconds to
  * appear has already missed its moment.
  */
+// DefaultLoadControl and ExoPlayer.Builder.setLoadControl are @UnstableApi, and
+// tuning the buffer is the entire reason this factory exists.
+@androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 @Singleton
 class PreviewPlayerFactory @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -60,6 +64,9 @@ class PreviewPlayerFactory @Inject constructor(
  * A TextureView rather than the default SurfaceView: a SurfaceView punches a hole
  * through the window and would draw over the channel grid instead of behind it.
  */
+// PlayerSurface and SURFACE_TYPE_TEXTURE_VIEW come from media3-ui-compose, which
+// is @UnstableApi in full.
+@androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 @Composable
 fun PreviewSurface(
     player: ExoPlayer,
