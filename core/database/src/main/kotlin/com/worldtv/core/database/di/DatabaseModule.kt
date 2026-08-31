@@ -2,6 +2,7 @@ package com.worldtv.core.database.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import com.worldtv.core.database.WorldTvDatabase
 import com.worldtv.core.database.dao.ChannelDao
 import com.worldtv.core.database.dao.EpgDao
