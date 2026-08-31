@@ -93,9 +93,14 @@ class EpgSynchronizer @Inject constructor(
 
         val horizon = now + FUTURE_HORIZON.inWholeMilliseconds
         val urls = epgDao.distinctSourceUrls()
-        val prioritised = urls.sortedByDescending { url ->
-            epgDao.channelsForSource(url).count { it in favouriteChannelIds }
+        // Counted up front rather than inside the comparator: sortedByDescending takes
+        // a crossinline selector, which cannot suspend, and a DAO call there would run
+        // once per comparison instead of once per source.
+        val favouriteCounts = HashMap<String, Int>(urls.size)
+        for (url in urls) {
+            favouriteCounts[url] = epgDao.channelsForSource(url).count { it in favouriteChannelIds }
         }
+        val prioritised = urls.sortedByDescending { favouriteCounts[it] ?: 0 }
 
         var sourcesDone = 0
         var programmesWritten = 0
