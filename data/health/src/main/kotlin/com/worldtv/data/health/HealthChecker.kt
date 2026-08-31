@@ -142,8 +142,14 @@ class HealthChecker @Inject constructor(
             while (time.elapsedMillis() < deadline) {
                 val batch = store.dueForCheck(time.nowMillis(), config.batchSize, priority)
                 if (batch.isEmpty()) break
-                checkBatch(batch)
                 checked += batch.size
+                // A batch that wrote nothing left every row exactly as due as it was,
+                // so the next query returns the same rows and the loop makes no
+                // progress. That is what a wholly Inconclusive batch looks like — the
+                // device is offline, or its DNS is down — and re-probing it until the
+                // budget expires only burns the worker's lifetime. Abandon the bucket
+                // and let the next period try again.
+                if (checkBatch(batch).isEmpty()) break
             }
             if (time.elapsedMillis() >= deadline) break
         }

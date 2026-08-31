@@ -40,4 +40,6 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.junit4)
     androidTestImplementation(libs.androidx.test.runner)
+    // StreamDaoSweepTest drives suspending DAO methods from `runBlocking`.
+    androidTestImplementation(libs.kotlinx.coroutines.core)
 }

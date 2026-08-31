@@ -3,6 +3,7 @@ package com.worldtv.data.health
 import com.worldtv.core.model.HealthInfo
 import com.worldtv.core.model.StreamState
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -29,12 +30,23 @@ private class FakeProbe(
     }
 }
 
+/**
+ * Stands in for Room.
+ *
+ * Note what it deliberately does *not* do: serving a target does not remove it. That
+ * mirrors the real query, which selects on `nextCheckAt <= now` — a row only stops
+ * being due once something writes a later `nextCheckAt` to it. Set [drainOnWrite] to
+ * model that write-back; leave it off to model the rows that never get one.
+ */
 private class FakeStore(
     private val health: MutableMap<String, HealthInfo> = mutableMapOf(),
     private val due: MutableList<ProbeTarget> = mutableListOf(),
+    private val drainOnWrite: Boolean = false,
 ) : HealthStore {
     val writes = mutableListOf<Map<String, HealthInfo>>()
     var revived = 0
+
+    private val buckets = mutableMapOf<CheckPriority, MutableList<ProbeTarget>>()
 
     override suspend fun dueForCheck(now: Long, limit: Int): List<ProbeTarget> = due.take(limit)
 
@@ -42,21 +54,38 @@ private class FakeStore(
         now: Long,
         limit: Int,
         priority: CheckPriority,
-    ): List<ProbeTarget> = if (priority == CheckPriority.FAVORITES) due.take(limit) else emptyList()
+    ): List<ProbeTarget> = queueFor(priority).take(limit)
 
     override suspend fun healthOf(streamId: String): HealthInfo? = health[streamId]
 
     override suspend fun updateHealth(updates: Map<String, HealthInfo>) {
         writes += updates
         health.putAll(updates)
+        if (drainOnWrite) {
+            due.removeAll { it.id in updates }
+            buckets.values.forEach { queue -> queue.removeAll { it.id in updates } }
+        }
     }
 
     override suspend fun reviveExpired(now: Long): Int = revived
 
     fun seed(id: String, info: HealthInfo) { health[id] = info }
+
+    /** Enqueues into the default (favourites) bucket, which most tests use. */
     fun enqueue(vararg targets: ProbeTarget) { due += targets }
+
+    fun enqueue(priority: CheckPriority, vararg targets: ProbeTarget) {
+        buckets.getOrPut(priority) { mutableListOf() } += targets
+    }
+
     fun clearDue() { due.clear() }
     fun currentHealth(id: String): HealthInfo? = health[id]
+
+    private fun queueFor(priority: CheckPriority): List<ProbeTarget> = when {
+        buckets.containsKey(priority) -> buckets.getValue(priority)
+        priority == CheckPriority.FAVORITES -> due
+        else -> emptyList()
+    }
 }
 
 class HealthCheckerTest {
@@ -195,6 +224,83 @@ class HealthCheckerTest {
         // batch, so finishing early and resuming next period is the correct behaviour.
         assertTrue(checked in 1..200, "checked $checked")
         assertFalse(store.writes.isEmpty())
+    }
+
+    @Test
+    fun `a sweep abandons a bucket it cannot make progress on instead of spinning`() = runTest {
+        // Nothing here can be resolved: an offline device, a DNS outage, or a bucket of
+        // transports the probe cannot judge over HTTP. Inconclusive writes nothing, so
+        // every row stays exactly as due as it was and the query keeps serving the same
+        // batch. Without a progress check the loop re-probes it until the budget is
+        // gone — and when the verdict costs no network, as it does for an RTSP URL,
+        // that is a hot loop for the whole eight minutes.
+        val probe = object : StreamProbe {
+            val calls = AtomicInteger()
+            override suspend fun checkManifest(target: ProbeTarget): CheckResult {
+                calls.incrementAndGet()
+                return CheckResult.Inconclusive("non-http transport")
+            }
+
+            override suspend fun checkSegment(target: ProbeTarget, manifest: String) =
+                CheckResult.Inconclusive("non-http transport")
+        }
+        val store = FakeStore()
+        repeat(20) { store.enqueue(target("s$it")) }
+
+        // The fake clock never advances on its own, so the budget cannot end this
+        // sweep. Only the progress check can.
+        val checked = checker(probe, store)
+            .sweep(budgetMillis = 8.minutes.inWholeMilliseconds, priorities = listOf(CheckPriority.FAVORITES))
+
+        assertEquals(20, checked)
+        assertEquals(20, probe.calls.get(), "each stream should be probed once, not in a loop")
+        assertTrue(store.writes.isEmpty(), "an inconclusive batch must not write")
+    }
+
+    @Test
+    fun `a bucket that cannot be resolved does not starve the buckets after it`() = runTest {
+        // The regression that matters in the field: one favourited RTSP stream used to
+        // consume the entire sweep budget in the first bucket, so recents, the home
+        // country and the rest of the catalog were never checked at all.
+        val probe = FakeProbe(
+            manifestResults = mutableMapOf(
+                "rtsp" to CheckResult.Inconclusive("non-http transport"),
+                "hls" to CheckResult.Alive(latencyMs = 40, manifest = "#EXTM3U"),
+            ),
+        )
+        val store = FakeStore(drainOnWrite = true).apply {
+            enqueue(CheckPriority.FAVORITES, target("rtsp"))
+            enqueue(CheckPriority.EVERYTHING_ELSE, target("hls"))
+        }
+
+        checker(probe, store).sweep(
+            budgetMillis = 8.minutes.inWholeMilliseconds,
+            priorities = listOf(CheckPriority.FAVORITES, CheckPriority.EVERYTHING_ELSE),
+        )
+
+        assertEquals(StreamState.OK, store.currentHealth("hls")?.state, "the later bucket never ran")
+    }
+
+    @Test
+    fun `a sweep keeps draining a bucket for as long as it is making progress`() = runTest {
+        // The other half of the guarantee: stopping on no-progress must not stop a
+        // sweep that is working. Batches are 2 wide, so five rows take three passes.
+        val probe = FakeProbe(
+            manifestResults = (0 until 5).associate {
+                "s$it" to CheckResult.Alive(latencyMs = 30, manifest = "#EXTM3U") as CheckResult
+            }.toMutableMap(),
+        )
+        val store = FakeStore(drainOnWrite = true)
+        repeat(5) { store.enqueue(target("s$it")) }
+        val checker = checker(probe, store).apply { config = config.copy(batchSize = 2) }
+
+        val checked = checker.sweep(
+            budgetMillis = 8.minutes.inWholeMilliseconds,
+            priorities = listOf(CheckPriority.FAVORITES),
+        )
+
+        assertEquals(5, checked)
+        assertEquals(3, store.writes.size, "expected batches of 2, 2 and 1")
     }
 
     @Test

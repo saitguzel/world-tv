@@ -66,11 +66,21 @@ interface StreamDao {
      * The sweep query. Backed by the `(state, nextCheckAt)` index.
      *
      * DEAD rows are excluded here; they come back only through [reviveExpired].
+     *
+     * `NON_HTTP` rows are excluded too, and that exclusion is load-bearing. An RTSP or
+     * UDP URL cannot be judged over HTTP, so its probe returns `Inconclusive`, and an
+     * inconclusive probe deliberately writes nothing — not even `nextCheckAt`. Such a
+     * row therefore stays due forever and, since the ordering is `nextCheckAt ASC` and
+     * unchecked rows carry 0, sorts to the very front of every sweep. Without this
+     * predicate a single RTSP stream re-serves the same batch until the sweep's budget
+     * runs out and nothing else is ever checked. They lose nothing by being skipped:
+     * playback is the only signal that can judge them, and `reportPlayback` does not
+     * come through here.
      */
     @Query(
         """
         SELECT id, url, referrer, userAgent, label, kind FROM streams
-        WHERE nextCheckAt <= :now AND state != 'DEAD'
+        WHERE nextCheckAt <= :now AND state != 'DEAD' AND kind != 'NON_HTTP'
         ORDER BY nextCheckAt ASC
         LIMIT :limit
         """,
@@ -81,7 +91,7 @@ interface StreamDao {
         """
         SELECT s.id, s.url, s.referrer, s.userAgent, s.label, s.kind FROM streams s
         JOIN favorites f ON f.id = s.channelId AND f.kind = 'channel'
-        WHERE s.nextCheckAt <= :now AND s.state != 'DEAD'
+        WHERE s.nextCheckAt <= :now AND s.state != 'DEAD' AND s.kind != 'NON_HTTP'
         ORDER BY s.nextCheckAt ASC
         LIMIT :limit
         """,
@@ -92,7 +102,7 @@ interface StreamDao {
         """
         SELECT s.id, s.url, s.referrer, s.userAgent, s.label, s.kind FROM streams s
         JOIN recents r ON r.id = s.channelId AND r.kind = 'channel'
-        WHERE s.nextCheckAt <= :now AND s.state != 'DEAD'
+        WHERE s.nextCheckAt <= :now AND s.state != 'DEAD' AND s.kind != 'NON_HTTP'
         ORDER BY r.watchedAt DESC, s.nextCheckAt ASC
         LIMIT :limit
         """,
@@ -103,7 +113,8 @@ interface StreamDao {
         """
         SELECT s.id, s.url, s.referrer, s.userAgent, s.label, s.kind FROM streams s
         JOIN channels c ON c.id = s.channelId
-        WHERE s.nextCheckAt <= :now AND s.state != 'DEAD' AND c.country = :country
+        WHERE s.nextCheckAt <= :now AND s.state != 'DEAD' AND s.kind != 'NON_HTTP'
+          AND c.country = :country
         ORDER BY s.nextCheckAt ASC
         LIMIT :limit
         """,
@@ -115,6 +126,7 @@ interface StreamDao {
         """
         SELECT id, url, referrer, userAgent, label, kind FROM streams
         WHERE channelId IN (:channelIds) AND state != 'DEAD' AND nextCheckAt <= :now
+          AND kind != 'NON_HTTP'
         ORDER BY nextCheckAt ASC
         LIMIT :limit
         """,

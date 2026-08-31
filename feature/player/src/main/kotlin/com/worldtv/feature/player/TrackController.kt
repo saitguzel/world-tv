@@ -21,6 +21,17 @@ object TrackController {
     const val OFF_ID = "__off__"
 
     /**
+     * Whether [tracks] offers any video at all.
+     *
+     * Group presence, not selection: a video group that has not been selected yet is
+     * still a frame on its way. Only a stream with no video group whatsoever will
+     * never render one, and that is the case [PlaybackConfirmation] needs to know
+     * about.
+     */
+    fun hasVideo(tracks: Tracks): Boolean =
+        tracks.groups.any { it.type == C.TRACK_TYPE_VIDEO }
+
+    /**
      * Flattens [tracks] into the selectable options of one type.
      *
      * Unsupported formats are dropped: offering a track the device cannot decode

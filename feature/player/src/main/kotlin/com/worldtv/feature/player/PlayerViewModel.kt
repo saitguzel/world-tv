@@ -121,6 +121,10 @@ class PlayerViewModel @Inject constructor(
     private var streams: List<Stream> = emptyList()
     private var streamIndex = 0
     private var playbackStartedAt = 0L
+
+    /** Whether the current attempt has proven itself. See [PlaybackConfirmation]. */
+    private val confirmation = PlaybackConfirmation()
+
     private var slowLoadJob: Job? = null
     private var channelCardJob: Job? = null
 
@@ -146,24 +150,21 @@ class PlayerViewModel @Inject constructor(
         }
 
         override fun onRenderedFirstFrame() {
-            val current = streams.getOrNull(streamIndex) ?: return
-            val timeToFirstFrame = (time.elapsedMillis() - playbackStartedAt).toInt()
-            healthRepository.reportPlayback(
-                current.id,
-                PlaybackSignal.RenderedFirstFrame(timeToFirstFrame),
-            )
-            slowLoadJob?.cancel()
-            _uiState.update {
-                it.copy(isBuffering = false, tryingAlternative = false, unavailable = false)
-            }
+            if (confirmation.onRenderedFirstFrame()) confirmPlaybackWorking()
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             _uiState.update { it.copy(isBuffering = playbackState == Player.STATE_BUFFERING) }
+            if (playbackState == Player.STATE_READY && confirmation.onReady()) {
+                confirmPlaybackWorking()
+            }
         }
 
         override fun onTracksChanged(tracks: Tracks) {
             currentTracks = tracks
+            if (confirmation.onTracksKnown(TrackController.hasVideo(tracks))) {
+                confirmPlaybackWorking()
+            }
             _uiState.update {
                 it.copy(
                     subtitleTracks = TrackController.optionsOf(
@@ -254,6 +255,7 @@ class PlayerViewModel @Inject constructor(
         }
 
         playbackStartedAt = time.elapsedMillis()
+        confirmation.reset()
         _uiState.update {
             it.copy(
                 stream = stream,
@@ -297,6 +299,24 @@ class PlayerViewModel @Inject constructor(
                 )
             }
             advanceToNextStream()
+        }
+    }
+
+    /**
+     * Records that the current attempt is actually playing: stops the watchdog and
+     * tells the health engine, which counts this as the strongest signal it gets.
+     *
+     * Called at most once per attempt — [PlaybackConfirmation] owns that guarantee.
+     */
+    private fun confirmPlaybackWorking() {
+        val current = streams.getOrNull(streamIndex) ?: return
+        healthRepository.reportPlayback(
+            current.id,
+            PlaybackSignal.RenderedFirstFrame((time.elapsedMillis() - playbackStartedAt).toInt()),
+        )
+        slowLoadJob?.cancel()
+        _uiState.update {
+            it.copy(isBuffering = false, tryingAlternative = false, unavailable = false)
         }
     }
 

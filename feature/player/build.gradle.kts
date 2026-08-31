@@ -53,4 +53,10 @@ dependencies {
     implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.media3.common)
     implementation(libs.okhttp)
+
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
+
+tasks.withType<Test>().configureEach { useJUnitPlatform() }
