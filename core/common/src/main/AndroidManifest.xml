@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      NetworkMonitor registers a ConnectivityManager callback, so this module is the
+      one that needs the permission and the one that should declare it: the manifest
+      merger folds it into the app, and lint analyses each library on its own, where
+      :app's declaration is not visible.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+</manifest>
