@@ -1,10 +1,10 @@
 // AGP 9 supplies Kotlin itself, but it pins KGP to the version it was built against
-// (2.2.10). The Compose and serialization compiler plugins have to run against the
-// same compiler they were released for, so the classpath is raised to the catalog's
-// Kotlin version here — the only supported way to move built-in Kotlin forward.
+// (2.2.10) — older than the stdlib the current AndroidX releases put on the compile
+// classpath, which makes even kotlin.Unit unreadable. The classpath is raised to the
+// catalog's Kotlin version here, the documented way to move built-in Kotlin forward.
 buildscript {
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.21")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.10")
     }
 }
 

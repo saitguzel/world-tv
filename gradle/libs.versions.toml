@@ -6,7 +6,7 @@
 
 [versions]
 agp = "9.1.1"
-kotlin = "2.2.21"
+kotlin = "2.4.10"
 ksp = "2.3.11"
 hilt = "2.60.1"
 
