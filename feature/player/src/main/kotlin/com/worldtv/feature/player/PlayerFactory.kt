@@ -2,6 +2,7 @@ package com.worldtv.feature.player
 
 import android.content.Context
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
@@ -22,6 +23,11 @@ import okhttp3.OkHttpClient
  * opened a connection to the same origin, and reusing the pooled TLS session is worth
  * roughly a second on time-to-first-frame.
  */
+// Every DataSource and LoadControl type below is @UnstableApi: media3 marks its
+// whole datasource and exoplayer-internals surface that way, and this class exists
+// precisely to configure them. Opting in here keeps the acknowledgement on the one
+// declaration that touches them.
+@androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 @Singleton
 class PlayerFactory @Inject constructor(
     @ApplicationContext private val context: Context,

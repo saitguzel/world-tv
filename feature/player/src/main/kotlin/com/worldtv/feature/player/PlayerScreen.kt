@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -45,6 +46,8 @@ import com.worldtv.feature.player.R
  * the preview pass, because a component that is not focused cannot receive key events
  * in Compose, and the whole point of this screen is that nothing is focused.
  */
+// media3-ui-compose, and PlayerSurface with it, is still @UnstableApi.
+@androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 @Composable
 fun PlayerScreen(
     channelId: String,

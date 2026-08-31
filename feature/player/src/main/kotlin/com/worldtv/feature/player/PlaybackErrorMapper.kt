@@ -1,6 +1,7 @@
 package com.worldtv.feature.player
 
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
 import com.worldtv.data.health.PlaybackSignal
 
@@ -11,6 +12,9 @@ import com.worldtv.data.health.PlaybackSignal
  * the stream would eliminate working channels whenever the user's Wi-Fi drops or their
  * box lacks a codec — and those two causes together are a large share of real errors.
  */
+// HttpDataSource.InvalidResponseCodeException is @UnstableApi; it is the only way
+// to read the HTTP status off a PlaybackException, which this mapper is built on.
+@androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 object PlaybackErrorMapper {
 
     fun toSignal(error: PlaybackException): PlaybackSignal = when (error.errorCode) {
