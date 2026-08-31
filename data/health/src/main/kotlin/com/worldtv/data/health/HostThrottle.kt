@@ -25,7 +25,13 @@ class HostThrottle(private val maxPerHost: Int = DEFAULT_MAX_PER_HOST) {
      */
     suspend fun <T> withHostPermit(url: String, block: suspend () -> T): T {
         val host = hostOf(url) ?: return block()
-        val semaphore = semaphores.computeIfAbsent(host) { Semaphore(maxPerHost) }
+        // computeIfAbsent is API 24 on Android, and this module is plain Kotlin, so
+        // lint never inspects it even though its classes ship in the APK.
+        // ConcurrentMap.putIfAbsent has been there since API 1 and keeps the same
+        // guarantee: whoever loses the race uses the winner's semaphore, so a host
+        // is never throttled by two of them.
+        val semaphore = semaphores[host]
+            ?: Semaphore(maxPerHost).let { semaphores.putIfAbsent(host, it) ?: it }
         return semaphore.withPermit { block() }
     }
 

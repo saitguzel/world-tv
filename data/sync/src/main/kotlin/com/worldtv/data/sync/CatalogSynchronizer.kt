@@ -185,7 +185,9 @@ class CatalogSynchronizer @Inject constructor(
             if (fetch is CatalogFetch.Changed) {
                 // First logo per channel wins; the file is ordered with the primary
                 // feed first and re-ranking would mean holding all of them.
-                for (logo in fetch.items) logos.putIfAbsent(logo.channel, logo.url)
+                // getOrPut, not putIfAbsent: the latter is a Java 8 default method on
+                // Map and only exists from API 24, four levels above this app's minimum.
+                for (logo in fetch.items) logos.getOrPut(logo.channel) { logo.url }
                 recordSyncState(RESOURCE_LOGOS, fetch, time.nowMillis(), logos.size)
             }
         }
