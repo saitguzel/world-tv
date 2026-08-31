@@ -3,6 +3,7 @@ package com.worldtv.data.sync.epg
 import com.worldtv.core.model.Programme
 import com.worldtv.core.model.XmltvTime
 import java.io.InputStream
+import javax.inject.Inject
 import javax.xml.parsers.SAXParserFactory
 import org.xml.sax.Attributes
 import org.xml.sax.InputSource
@@ -25,7 +26,7 @@ import org.xml.sax.helpers.DefaultHandler
  * of wildly uneven quality, and losing one programme is much better than losing a
  * whole country's schedule to one bad timestamp.
  */
-class XmltvParser {
+class XmltvParser @Inject constructor() {
 
     data class Stats(val parsed: Int, val skipped: Int)
 
