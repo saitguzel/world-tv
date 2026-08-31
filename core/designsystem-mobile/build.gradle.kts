@@ -1,15 +1,18 @@
+// The phone half of the design system. Separate from :core:designsystem-tv so neither
+// can reach the other's MaterialTheme — androidx.tv.material3 and
+// androidx.compose.material3 are different CompositionLocal trees, and a component
+// rendered under the wrong one compiles and runs while silently drawing wrong.
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "com.worldtv.core.designsystem"
+    namespace = "com.worldtv.core.designsystem.mobile"
     compileSdk = 37
 
     defaultConfig {
         minSdk = 23
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -21,20 +24,15 @@ android {
 }
 
 dependencies {
-    // api, not implementation: ChannelCardState exposes Programme and
-    // HealthBadge in its public signature.
-    api(projects.core.model)
-    // LocalFormFactor exposes FormFactor in its public type.
-    api(projects.core.common)
+    // api: phone screens render these cards beside the neutral tokens and shared leaves.
+    api(projects.core.designsystem)
 
     api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.foundation)
     api(libs.androidx.compose.ui)
-    api(libs.androidx.compose.ui.graphics)
-    // BackHandler, used by DoubleBackToExit.
-    api(libs.androidx.activity.compose)
-    api(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
+    api(libs.androidx.compose.material3)
+    api(libs.androidx.compose.material3.window.size)
+    api(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
 

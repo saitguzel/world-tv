@@ -20,28 +20,6 @@ import com.worldtv.feature.player.PlayerScreen
 import com.worldtv.feature.radio.RadioScreen
 import com.worldtv.feature.settings.SettingsScreen
 
-/**
- * Navigation graph.
- *
- * Flat by design: every destination is one hop from Home, so nothing is ever more
- * than two BACK presses from the start. Backing out of four levels with a remote is
- * punishing, and the architecture doc caps depth at three for that reason.
- */
-object Routes {
-    const val HOME = "home"
-    const val BROWSE = "browse?country={country}"
-    const val SEARCH = "search"
-    const val RADIO = "radio"
-    const val FAVORITES = "favorites"
-    const val SETTINGS = "settings"
-    const val PLAYER = "player/{channelId}"
-
-    fun browse(country: String? = null): String =
-        if (country == null) "browse" else "browse?country=$country"
-
-    fun player(channelId: String) = "player/$channelId"
-}
-
 @Composable
 fun WorldTvNavHost(
     onExit: () -> Unit = {},

@@ -55,6 +55,9 @@ dependencies {
     implementation(projects.core.database)
     implementation(projects.core.network)
     implementation(projects.core.designsystem)
+    implementation(projects.core.designsystemTv)
+    implementation(projects.core.designsystemMobile)
+    implementation(libs.androidx.compose.material3.adaptive.nav.suite)
     implementation(projects.data.health)
     implementation(projects.data.repository)
     implementation(projects.data.sync)
@@ -88,8 +91,13 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }
+
+tasks.withType<Test>().configureEach { useJUnitPlatform() }
