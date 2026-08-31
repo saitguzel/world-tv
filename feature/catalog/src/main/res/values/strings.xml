@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mode_tv">TV</string>
+    <string name="mode_radio">Radyo</string>
+    <string name="action_search">Ara</string>
+    <string name="action_favorites">Favoriler</string>
+    <string name="action_settings">Ayarlar</string>
+
+    <string name="home_continue">Devam et</string>
+    <string name="home_favorites">Favoriler</string>
+    <string name="home_countries">Ülkeler</string>
+    <string name="home_catalog_missing">Katalog henüz indirilmedi.</string>
+    <string name="home_catalog_downloading">Katalog ilk kez indiriliyor…</string>
+    <string name="home_download_now">Şimdi indir</string>
+    <string name="home_exit_confirm">Çıkmak için tekrar geri tuşuna basın</string>
+    <!-- flag, name, live channel count -->
+    <string name="country_with_count">%1$s %2$s · %3$d</string>
+
+    <string name="browse_loading">Kanallar yükleniyor…</string>
+    <string name="browse_empty">Bu listede kanal yok</string>
+    <string name="browse_retry">Yeniden dene</string>
+    <string name="browse_countries">Ülkeler</string>
+    <string name="browse_categories">Kategoriler</string>
+
+    <!-- The on-screen placeholder. :app owns search_hint, which searchable.xml reads. -->
+    <string name="search_placeholder">Kanal ara</string>
+    <string name="search_voice">Sesle ara</string>
+    <string name="search_no_results">Sonuç yok</string>
+    <string name="search_start">Aramaya başlayın</string>
+    <string name="search_recent">Son aramalar</string>
+    <string name="search_popular">Sık izlenenler</string>
+    <string name="keyboard_space">Boşluk</string>
+    <string name="keyboard_delete">Sil</string>
+    <string name="keyboard_clear">Temizle</string>
+</resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="player_channels">Kanallar</string>
+    <string name="player_channel_list">Kanal listesi</string>
+    <string name="player_tracks">Altyazı ve ses</string>
+    <string name="player_favorite_add">Favorilere ekle</string>
+    <string name="player_favorite_remove">Favorilerden çıkar</string>
+    <string name="player_unavailable">Bu kanalın çalışan yayını bulunamadı</string>
+    <string name="player_retry">Yeniden dene</string>
+    <string name="player_back_to_list">Listeye dön</string>
+    <string name="player_trying_alternative">Alternatif kaynak deneniyor…</string>
+    <string name="player_geo_warning">Bu yayın bölgenizde engelli olabilir</string>
+    <!-- current source index, total sources -->
+    <string name="player_source_of">Kaynak %1$d/%2$d</string>
+
+    <string name="tracks_subtitles">Altyazı</string>
+    <string name="tracks_audio">Ses</string>
+    <string name="tracks_off">Kapalı</string>
+    <string name="tracks_unknown">Bilinmeyen</string>
+    <string name="tracks_none">Bu yayında seçilebilir altyazı veya ses parçası yok</string>
+</resources>

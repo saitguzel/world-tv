@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Radio playback keeps running with the app in the background, which is what these
+      two permissions are for.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <application>
+        <!--
+          Declared here rather than in :app because this module owns the service. The
+          merger folds it into the app either way, but lint resolves a component
+          against the classpath of the module whose manifest declares it — and
+          media3-session, where MediaSessionService lives, is on this module's
+          classpath and not on :app's.
+        -->
+        <service
+            android:name="com.worldtv.feature.radio.RadioPlaybackService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
+    </application>
+
+</manifest>

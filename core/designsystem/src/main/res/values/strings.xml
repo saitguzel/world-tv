@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spoken by TalkBack as part of a card's description, not shown on screen. -->
+    <string name="a11y_state_verified">doğrulandı</string>
+    <string name="a11y_state_unchecked">henüz kontrol edilmedi</string>
+    <string name="a11y_state_geo_blocked">bölgesel kısıtlı olabilir</string>
+    <string name="a11y_state_unavailable">şu an kullanılamıyor</string>
+    <string name="a11y_favorite">favori</string>
+    <string name="a11y_now_playing">şu an: %1$s</string>
+
+    <string name="programme_next">Sıradaki: %1$s</string>
+
+    <!-- Round-trip of the fastest verified stream for a channel. -->
+    <string name="latency_ms">%1$d ms</string>
+</resources>
