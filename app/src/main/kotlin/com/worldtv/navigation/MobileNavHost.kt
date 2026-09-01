@@ -3,6 +3,7 @@ package com.worldtv.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -37,13 +38,18 @@ fun MobileNavHost(
     navController: NavHostController,
     onExit: () -> Unit = {},
     voiceQuery: StateFlow<String?> = MutableStateFlow(null),
+    modifier: Modifier = Modifier,
 ) {
     val pendingVoiceQuery by voiceQuery.collectAsStateWithLifecycle()
     LaunchedEffect(pendingVoiceQuery) {
         if (!pendingVoiceQuery.isNullOrBlank()) navController.navigate(Routes.SEARCH)
     }
 
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+    NavHost(
+        navController = navController,
+        startDestination = Routes.HOME,
+        modifier = modifier,
+    ) {
         composable(Routes.HOME) {
             MobileHomeScreen(
                 onChannelSelected = { navController.navigate(Routes.player(it)) },

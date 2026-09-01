@@ -79,6 +79,11 @@ fun MobileRadioScreen(
     val haptics = LocalHapticFeedback.current
     val favoriteUuids = remember(favorites) { favorites.map { it.uuid }.toSet() }
 
+    // Declared in the manifest but never requested until now, which silently suppressed
+    // the radio notification — the phone's transport control once the app is in the
+    // background. Asked at first playback, not at launch, and never blocking it.
+    val requestNotifications = rememberNotificationPermissionRequest()
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -107,7 +112,10 @@ fun MobileRadioScreen(
                     station = station,
                     isFavorite = isFavorite,
                     isCurrent = station.uuid == nowPlaying?.uuid,
-                    onClick = { viewModel.play(station) },
+                    onClick = {
+                        requestNotifications()
+                        viewModel.play(station)
+                    },
                     onLongClick = {
                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         viewModel.toggleFavorite(station.uuid, isFavorite)

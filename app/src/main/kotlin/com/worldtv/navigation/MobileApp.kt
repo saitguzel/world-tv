@@ -10,10 +10,23 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.worldtv.feature.radio.mobile.MiniPlayerViewModel
+import com.worldtv.feature.radio.mobile.shouldShowMiniPlayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
@@ -61,11 +74,50 @@ fun MobileApp(
             NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
         },
     ) {
-        MobileNavHost(
-            navController = navController,
-            onExit = onExit,
-            voiceQuery = voiceQuery,
-        )
+        Column {
+            MobileNavHost(
+                navController = navController,
+                onExit = onExit,
+                voiceQuery = voiceQuery,
+                modifier = Modifier.weight(1f),
+            )
+            // Above the nav host rather than inside the radio screen: playback outlives
+            // the screen that started it, so the controls have to as well.
+            MiniPlayer(isPlayerRoute = Routes.isPlayer(currentRoute))
+        }
+    }
+}
+
+@Composable
+private fun MiniPlayer(
+    isPlayerRoute: Boolean,
+    viewModel: MiniPlayerViewModel = hiltViewModel(),
+) {
+    val station by viewModel.nowPlaying.collectAsStateWithLifecycle()
+    val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
+    val current = station ?: return
+    if (!shouldShowMiniPlayer(hasStation = true, isPlayerRoute = isPlayerRoute)) return
+
+    Surface(tonalElevation = 3.dp) {
+        Column(Modifier.fillMaxWidth()) {
+            HorizontalDivider()
+            ListItem(
+                headlineContent = {
+                    Text(current.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                },
+                trailingContent = {
+                    IconButton(onClick = viewModel::togglePlayPause) {
+                        Icon(
+                            Icons.Filled.PlayArrow,
+                            contentDescription = stringResource(
+                                if (isPlaying) R.string.mini_player_pause
+                                else R.string.mini_player_play,
+                            ),
+                        )
+                    }
+                },
+            )
+        }
     }
 }
 

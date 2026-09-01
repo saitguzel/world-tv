@@ -28,6 +28,9 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.designsystemTv)
     implementation(projects.core.designsystemMobile)
+
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
     implementation(projects.data.repository)
 
     implementation(platform(libs.androidx.compose.bom))
@@ -52,3 +55,5 @@ dependencies {
     implementation(libs.androidx.media3.datasource.okhttp)
     implementation(libs.okhttp)
 }
+
+tasks.withType<Test>().configureEach { useJUnitPlatform() }

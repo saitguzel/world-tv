@@ -16,4 +16,8 @@
     <string name="tab_search">Ara</string>
     <string name="tab_radio">Radyo</string>
     <string name="tab_favorites">Favoriler</string>
+
+    <!-- Now-playing bar above the navigation host. -->
+    <string name="mini_player_play">Çal</string>
+    <string name="mini_player_pause">Duraklat</string>
 </resources>
