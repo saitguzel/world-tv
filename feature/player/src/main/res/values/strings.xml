@@ -22,4 +22,6 @@
     <!-- Phone HUD. A remote has dedicated media keys, so TV never needed these. -->
     <string name="player_play">Çal</string>
     <string name="player_pause">Duraklat</string>
+    <string name="player_previous_channel">Önceki kanal</string>
+    <string name="player_next_channel">Sonraki kanal</string>
 </resources>

@@ -2,24 +2,19 @@ package com.worldtv.feature.radio.mobile
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -71,7 +66,6 @@ fun MobileRadioScreen(
     val stations = viewModel.stations.collectAsLazyPagingItems()
     val countries by viewModel.availableCountries.collectAsStateWithLifecycle()
     val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
-    val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
@@ -92,14 +86,13 @@ fun MobileRadioScreen(
                 actions = {
                     IconButton(onClick = { sheetOpen = true }) {
                         Icon(
-                            Icons.Filled.List,
+                            Icons.AutoMirrored.Filled.List,
                             contentDescription = stringResource(R.string.radio_filter),
                         )
                     }
                 },
             )
         },
-        bottomBar = { nowPlaying?.let { NowPlayingBar(it, isPlaying, viewModel::togglePlayPause) } },
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding)) {
             items(
@@ -183,27 +176,3 @@ private fun StationRow(
     )
 }
 
-@Composable
-private fun NowPlayingBar(station: RadioStation, isPlaying: Boolean, onToggle: () -> Unit) {
-    Surface(tonalElevation = 3.dp) {
-        Column(Modifier.fillMaxWidth()) {
-            HorizontalDivider()
-            ListItem(
-                headlineContent = {
-                    Text(station.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                },
-                supportingContent = { Text(stringResource(R.string.radio_now_playing), maxLines = 1) },
-                trailingContent = {
-                    IconButton(onClick = onToggle) {
-                        Icon(
-                            Icons.Filled.PlayArrow,
-                            contentDescription = stringResource(
-                                if (isPlaying) R.string.radio_pause else R.string.radio_play,
-                            ),
-                        )
-                    }
-                },
-            )
-        }
-    }
-}

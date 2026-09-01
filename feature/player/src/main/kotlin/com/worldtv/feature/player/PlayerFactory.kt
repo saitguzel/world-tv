@@ -1,6 +1,8 @@
 package com.worldtv.feature.player
 
 import android.content.Context
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
@@ -49,6 +51,17 @@ class PlayerFactory @Inject constructor(
         return ExoPlayer.Builder(context)
             .setMediaSourceFactory(DefaultMediaSourceFactory(context))
             .setLoadControl(loadControl)
+            // Without this the video player never *requests* audio focus, so nothing
+            // ever tells the radio service to stop and both play at once. The radio
+            // side has always asked for focus and relied on the system to arbitrate —
+            // but arbitration needs both parties to take part, and this one was not.
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .build(),
+                /* handleAudioFocus = */ true,
+            )
             .setHandleAudioBecomingNoisy(true)
             .build()
     }

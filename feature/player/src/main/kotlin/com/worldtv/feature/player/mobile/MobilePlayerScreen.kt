@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -22,11 +23,12 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,6 +62,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.worldtv.core.designsystem.component.HealthDot
+import com.worldtv.core.designsystem.mobile.component.PauseIcon
 import com.worldtv.core.model.HealthBadge
 import com.worldtv.feature.player.PlayerGesture
 import com.worldtv.feature.player.PlayerGestures
@@ -217,7 +220,11 @@ fun MobilePlayerScreen(
                 items(drawerChannels.size, key = { drawerChannels[it].channel.id }) { index ->
                     val summary = drawerChannels[index]
                     ListItem(
-                        modifier = Modifier.padding(horizontal = 0.dp),
+                        // Material 3's ListItem has no onClick of its own. Without this
+                        // the drawer listed every channel and selected none of them.
+                        modifier = Modifier.clickable {
+                            viewModel.jumpTo(summary.channel.id)
+                        },
                         headlineContent = {
                             Text(
                                 summary.channel.name,
@@ -246,9 +253,12 @@ fun MobilePlayerScreen(
                 items(state.subtitleTracks.size + state.audioTracks.size) { index ->
                     val track = (state.subtitleTracks + state.audioTracks)[index]
                     ListItem(
+                        // Same trap as the channel drawer: without a clickable wrapper
+                        // the track list is a display, not a picker.
+                        modifier = Modifier.clickable { viewModel.selectTrack(track) },
                         headlineContent = { Text(track.label) },
                         leadingContent = if (track.isSelected) {
-                            { Icon(Icons.Filled.PlayArrow, contentDescription = null) }
+                            { Icon(Icons.Filled.Check, contentDescription = null) }
                         } else {
                             null
                         },
@@ -292,7 +302,11 @@ private fun Hud(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = null, tint = Color.White)
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.player_back_to_list),
+                    tint = Color.White,
+                )
             }
             Text(
                 text = title,
@@ -316,7 +330,11 @@ private fun Hud(
             // stream offers no choice — the same rule the TV controls use.
             if (hasTracks) {
                 IconButton(onClick = onTracks) {
-                    Icon(Icons.Filled.Settings, contentDescription = null, tint = Color.White)
+                    Icon(
+                        Icons.Filled.Settings,
+                        contentDescription = stringResource(R.string.player_tracks),
+                        tint = Color.White,
+                    )
                 }
             }
         }
@@ -332,11 +350,15 @@ private fun Hud(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onPrevious) {
-                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = Color.White)
+                Icon(
+                    Icons.Filled.KeyboardArrowDown,
+                    contentDescription = stringResource(R.string.player_previous_channel),
+                    tint = Color.White,
+                )
             }
             IconButton(onClick = onPlayPause) {
                 Icon(
-                    Icons.Filled.PlayArrow,
+                    imageVector = if (isPlaying) PauseIcon else Icons.Filled.PlayArrow,
                     contentDescription = stringResource(
                         if (isPlaying) R.string.player_pause else R.string.player_play,
                     ),
@@ -344,10 +366,18 @@ private fun Hud(
                 )
             }
             IconButton(onClick = onNext) {
-                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, tint = Color.White)
+                Icon(
+                    Icons.Filled.KeyboardArrowUp,
+                    contentDescription = stringResource(R.string.player_next_channel),
+                    tint = Color.White,
+                )
             }
             IconButton(onClick = onChannels) {
-                Icon(Icons.Filled.List, contentDescription = null, tint = Color.White)
+                Icon(
+                    Icons.AutoMirrored.Filled.List,
+                    contentDescription = stringResource(R.string.player_channel_list),
+                    tint = Color.White,
+                )
             }
         }
     }

@@ -7,12 +7,13 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import com.worldtv.core.designsystem.mobile.component.PauseIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Surface
@@ -95,8 +96,10 @@ private fun MiniPlayer(
 ) {
     val station by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
+    // The rule itself decides, rather than being handed a constant after an early
+    // return has already made the decision — otherwise half of it is never exercised.
+    if (!shouldShowMiniPlayer(hasStation = station != null, isPlayerRoute = isPlayerRoute)) return
     val current = station ?: return
-    if (!shouldShowMiniPlayer(hasStation = true, isPlayerRoute = isPlayerRoute)) return
 
     Surface(tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth()) {
@@ -108,7 +111,7 @@ private fun MiniPlayer(
                 trailingContent = {
                     IconButton(onClick = viewModel::togglePlayPause) {
                         Icon(
-                            Icons.Filled.PlayArrow,
+                            imageVector = if (isPlaying) PauseIcon else Icons.Filled.PlayArrow,
                             contentDescription = stringResource(
                                 if (isPlaying) R.string.mini_player_pause
                                 else R.string.mini_player_play,
@@ -144,7 +147,7 @@ private data class NavItem(val route: String, val label: Int, val icon: ImageVec
  */
 private val NAV_ITEMS = listOf(
     NavItem(Routes.HOME, R.string.tab_home, Icons.Filled.Home),
-    NavItem(Routes.BROWSE_BASE, R.string.tab_browse, Icons.Filled.List),
+    NavItem(Routes.BROWSE_BASE, R.string.tab_browse, Icons.AutoMirrored.Filled.List),
     NavItem(Routes.SEARCH, R.string.tab_search, Icons.Filled.Search),
     NavItem(Routes.RADIO, R.string.tab_radio, Icons.Filled.PlayArrow),
     NavItem(Routes.FAVORITES, R.string.tab_favorites, Icons.Filled.Favorite),
