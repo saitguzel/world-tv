@@ -199,6 +199,12 @@ fun MobilePlayerScreen(
             },
         contentAlignment = Alignment.Center,
     ) {
+        // Behind the video: shown while buffering and while unavailable, so a failed
+        // channel lands on the blurred logo rather than on black.
+        if (state.isBuffering || state.unavailable) {
+            MobileLoadingBackdrop(logoUrl = state.channel?.logoUrl)
+        }
+
         PlayerSurface(
             player = viewModel.player,
             modifier = if (landscape || fullscreen) {
@@ -209,6 +215,36 @@ fun MobilePlayerScreen(
                 Modifier.fillMaxWidth().aspectRatio(state.videoAspectRatio)
             },
         )
+
+        // Conditions copied verbatim from the TV screen: the banner is suppressed once
+        // the channel is given up on, and the geo warning while the backdrop is up.
+        if (state.tryingAlternative && !state.unavailable) {
+            MobileStatusBanner(
+                text = stringResource(R.string.player_trying_alternative),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(bottom = 96.dp),
+            )
+        }
+
+        if (state.geoWarning && !state.isBuffering) {
+            MobileStatusBanner(
+                text = stringResource(R.string.player_geo_warning),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(top = 72.dp),
+            )
+        }
+
+        if (state.unavailable) {
+            MobileChannelUnavailable(
+                onRetry = viewModel::retry,
+                onBack = onBack,
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
 
         AnimatedVisibility(
             visible = state.showOverlay || state.unavailable,
