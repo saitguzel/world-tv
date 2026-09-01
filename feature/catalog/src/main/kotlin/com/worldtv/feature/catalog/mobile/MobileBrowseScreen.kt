@@ -1,15 +1,19 @@
 package com.worldtv.feature.catalog.mobile
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -103,15 +107,16 @@ fun MobileBrowseScreen(
         onVisible = viewModel::onChannelsVisible,
     )
 
-    val title = countries.firstOrNull { it.code == filter.country }?.name
-        ?: categories.firstOrNull { it.id == filter.category }?.name
-        ?: stringResource(R.string.browse_all_channels)
+    val countryName = countries.firstOrNull { it.code == filter.country }?.name
+    val categoryName = categories.firstOrNull { it.id == filter.category }?.name
+    val hasActiveFilter = filter.country != null || filter.category != null
+    val removeLabel = stringResource(R.string.browse_remove_filter)
 
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = { Text(stringResource(R.string.browse_all_channels)) },
                 actions = {
                     IconButton(onClick = { sheetOpen = true }) {
                         Icon(
@@ -125,6 +130,25 @@ fun MobileBrowseScreen(
         snackbarHost = { SnackbarHost(snackbarHost) },
     ) { padding ->
         val loading = channels.loadState.refresh is LoadState.Loading
+
+        // Active filters as chips rather than only in the title: with two axes the
+        // title can no longer say what is on, and the x removes one axis without
+        // opening the sheet at all.
+        if (hasActiveFilter) {
+            Row(
+                Modifier
+                    .padding(padding)
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                countryName?.let { name ->
+                    FilterChipWithClear(name, removeLabel) { viewModel.setCountry(null) }
+                }
+                categoryName?.let { name ->
+                    FilterChipWithClear(name, removeLabel) { viewModel.setCategory(null) }
+                }
+            }
+        }
 
         when {
             loading && channels.itemCount == 0 -> Centered(padding) {
@@ -141,7 +165,8 @@ fun MobileBrowseScreen(
             }
 
             else -> MobileChannelGrid(
-                modifier = Modifier.padding(padding),
+                modifier = Modifier.padding(top = if (hasActiveFilter) 56.dp else 0.dp)
+                    .padding(padding),
                 state = gridState,
             ) {
                 items(
@@ -187,10 +212,24 @@ fun MobileBrowseScreen(
                 sheetState = sheetState,
                 onCountry = { viewModel.setCountry(it); sheetOpen = false },
                 onCategory = { viewModel.setCategory(it); sheetOpen = false },
+                onClearAll = { viewModel.clearFilters(); sheetOpen = false },
+                hasActiveFilter = hasActiveFilter,
                 onDismiss = { sheetOpen = false },
             )
         }
     }
+}
+
+/** A filter chip whose trailing x clears just that axis. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterChipWithClear(label: String, removeLabel: String, onClear: () -> Unit) {
+    InputChip(
+        selected = true,
+        onClick = onClear,
+        label = { Text(label) },
+        trailingIcon = { Icon(Icons.Filled.Clear, contentDescription = removeLabel) },
+    )
 }
 
 @Composable

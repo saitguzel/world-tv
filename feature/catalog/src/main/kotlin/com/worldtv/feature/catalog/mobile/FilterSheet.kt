@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
@@ -50,6 +51,8 @@ fun FilterSheet(
     sheetState: SheetState,
     onCountry: (String?) -> Unit,
     onCategory: (String?) -> Unit,
+    onClearAll: () -> Unit,
+    hasActiveFilter: Boolean,
     onDismiss: () -> Unit,
 ) {
     var tab by remember { mutableIntStateOf(0) }
@@ -82,12 +85,35 @@ fun FilterSheet(
 
             LazyColumn(Modifier.heightIn(max = 420.dp)) {
                 item {
+                    // Names the axis it actually clears. It used to say "all channels",
+                    // which stopped being true once country and category could both be
+                    // on at once — clearing one leaves the other narrowing the list.
                     ListItem(
                         modifier = Modifier.clickable {
                             if (tab == 0) onCountry(null) else onCategory(null)
                         },
-                        headlineContent = { Text(stringResource(R.string.browse_all_channels)) },
+                        headlineContent = {
+                            Text(
+                                stringResource(
+                                    if (tab == 0) R.string.browse_all_countries
+                                    else R.string.browse_all_categories,
+                                ),
+                            )
+                        },
                     )
+                }
+                if (hasActiveFilter) {
+                    item {
+                        ListItem(
+                            modifier = Modifier.clickable(onClick = onClearAll),
+                            headlineContent = {
+                                Text(
+                                    text = stringResource(R.string.browse_clear_filters),
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            },
+                        )
+                    }
                 }
                 if (tab == 0) {
                     // normalize, not raw contains: it folds ı/İ/ş/ğ and strips accents,

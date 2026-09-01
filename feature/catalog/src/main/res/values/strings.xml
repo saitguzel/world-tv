@@ -36,6 +36,11 @@
     <!-- Phone browse: the country list is a sheet rather than a permanent side rail. -->
     <string name="browse_filter">Filtrele</string>
     <string name="browse_all_channels">Tüm kanallar</string>
+    <!-- Country and category narrow together, so clearing one is not "all channels". -->
+    <string name="browse_all_countries">Tüm ülkeler</string>
+    <string name="browse_all_categories">Tüm kategoriler</string>
+    <string name="browse_clear_filters">Filtreleri temizle</string>
+    <string name="browse_remove_filter">Filtreyi kaldır</string>
     <string name="browse_country_search">Ülke ara</string>
     <string name="browse_favorite_removed">Favorilerden çıkarıldı</string>
     <string name="browse_favorite_added">Favorilere eklendi</string>
