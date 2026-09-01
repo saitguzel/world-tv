@@ -24,4 +24,6 @@
     <string name="player_pause">Duraklat</string>
     <string name="player_previous_channel">Önceki kanal</string>
     <string name="player_next_channel">Sonraki kanal</string>
+    <string name="player_fullscreen_enter">Tam ekran</string>
+    <string name="player_fullscreen_exit">Tam ekrandan çık</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.worldtv.feature.player.mobile
 
 import android.app.Activity
+import android.content.pm.ActivityInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -43,7 +44,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -62,6 +65,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.worldtv.core.designsystem.component.HealthDot
+import com.worldtv.core.designsystem.mobile.component.FullscreenExitIcon
+import com.worldtv.core.designsystem.mobile.component.FullscreenIcon
 import com.worldtv.core.designsystem.mobile.component.PauseIcon
 import com.worldtv.core.model.HealthBadge
 import com.worldtv.feature.player.PlayerGesture
@@ -113,6 +118,28 @@ fun MobilePlayerScreen(
 
     val channelSheet = rememberModalBottomSheetState()
     val trackSheet = rememberModalBottomSheetState()
+    val activity = context as? Activity
+    var fullscreen by remember { mutableStateOf(false) }
+
+    // Restoring the activity's original orientation is not optional: forcing landscape
+    // and leaving it set would keep every other screen sideways after the user backs
+    // out of the player.
+    DisposableEffect(activity) {
+        val original = activity?.requestedOrientation
+        onDispose {
+            original?.let { activity.requestedOrientation = it }
+        }
+    }
+
+    LaunchedEffect(fullscreen) {
+        activity?.requestedOrientation = if (fullscreen) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        } else {
+            // Unspecified rather than portrait: the user may have the device rotated
+            // already, and forcing it upright would fight them.
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
 
     LaunchedEffect(channelId) { viewModel.openChannel(channelId) }
 
@@ -174,7 +201,7 @@ fun MobilePlayerScreen(
     ) {
         PlayerSurface(
             player = viewModel.player,
-            modifier = if (landscape) {
+            modifier = if (landscape || fullscreen) {
                 Modifier.fillMaxSize()
             } else {
                 // The ratio comes from the stream and is guarded against the 0x0 that
@@ -201,6 +228,8 @@ fun MobilePlayerScreen(
                 onFavorite = viewModel::toggleFavorite,
                 onChannels = viewModel::openChannelDrawer,
                 onTracks = viewModel::openTrackPicker,
+                isFullscreen = fullscreen,
+                onFullscreen = { fullscreen = !fullscreen },
             )
         }
     }
@@ -290,6 +319,8 @@ private fun Hud(
     onFavorite: () -> Unit,
     onChannels: () -> Unit,
     onTracks: () -> Unit,
+    isFullscreen: Boolean,
+    onFullscreen: () -> Unit,
 ) {
     Box(Modifier.fillMaxSize()) {
         Row(
@@ -376,6 +407,16 @@ private fun Hud(
                 Icon(
                     Icons.AutoMirrored.Filled.List,
                     contentDescription = stringResource(R.string.player_channel_list),
+                    tint = Color.White,
+                )
+            }
+            IconButton(onClick = onFullscreen) {
+                Icon(
+                    imageVector = if (isFullscreen) FullscreenExitIcon else FullscreenIcon,
+                    contentDescription = stringResource(
+                        if (isFullscreen) R.string.player_fullscreen_exit
+                        else R.string.player_fullscreen_enter,
+                    ),
                     tint = Color.White,
                 )
             }

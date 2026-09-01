@@ -13,8 +13,10 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val recents: List<ChannelSummary> = emptyList(),
@@ -49,11 +51,26 @@ class HomeViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
+    init {
+        // The periodic catalog worker's first run is scheduled within its 24-hour
+        // window, not immediately, so a fresh install would otherwise sit on an empty
+        // home screen — and an empty catalog also means no countries and no
+        // categories, which makes the filters look broken rather than unpopulated.
+        //
+        // A single read rather than a subscription: uiState is WhileSubscribed and
+        // collecting it here would keep it warm for the life of the view model.
+        viewModelScope.launch {
+            if (channelRepository.countries().first().isEmpty()) {
+                syncTrigger.syncNow()
+            }
+        }
+    }
+
     /**
      * Retry for a first run whose catalog sync failed.
      *
-     * Without this the user is stuck on an empty home screen until the periodic
-     * worker comes round again, with nothing to press.
+     * The automatic trigger above covers the empty case, so this is for the run that
+     * started and failed — a flaky first network, most often.
      */
     fun retrySync() = syncTrigger.syncNow()
 
