@@ -87,29 +87,55 @@ class SyncScheduler @Inject constructor(
         )
     }
 
-    /** First-run and "resync now" from settings. REPLACE so the user sees it happen. */
+    /**
+     * First-run and "resync now" from settings. REPLACE so the user sees it happen.
+     *
+     * A chain rather than one job: the guide is useless before the channels exist, and
+     * `EpgSyncWorker` reads the favourites, which are channel ids. Chaining is also what
+     * makes the guide appear on a fresh install at all — the periodic EPG worker's first
+     * run is scheduled somewhere inside its twelve-hour window, so without this the
+     * now/next line stays empty for most of a day.
+     */
     override fun syncNow() {
-        workManager.enqueueUniqueWork(
-            CATALOG_SYNC_NOW,
-            ExistingWorkPolicy.REPLACE,
-            OneTimeWorkRequestBuilder<CatalogSyncWorker>()
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build(),
-                )
-                .build(),
-        )
+        val networkOnly = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        workManager
+            .beginUniqueWork(
+                CATALOG_SYNC_NOW,
+                ExistingWorkPolicy.REPLACE,
+                OneTimeWorkRequestBuilder<CatalogSyncWorker>()
+                    .setConstraints(networkOnly)
+                    // Tagged so the progress flag below can watch this step alone.
+                    .addTag(CATALOG_STEP)
+                    .build(),
+            )
+            .then(
+                OneTimeWorkRequestBuilder<EpgSyncWorker>()
+                    .setConstraints(networkOnly)
+                    .build(),
+            )
+            .enqueue()
     }
 
-    /** True while a catalog sync is running, for the first-run progress state. */
+    /**
+     * True while the *catalog* step is running.
+     *
+     * Deliberately not the whole chain: the guide download that follows can take a
+     * while, and a spinner labelled "fetching the catalog" that stays up through it is
+     * telling the user something untrue.
+     */
     override val isSyncing: Flow<Boolean> = workManager
         .getWorkInfosForUniqueWorkFlow(CATALOG_SYNC_NOW)
-        .map { infos -> infos.any { it.state == WorkInfo.State.RUNNING } }
+        .map { infos ->
+            infos.any { it.state == WorkInfo.State.RUNNING && CATALOG_STEP in it.tags }
+        }
 
     private companion object {
         const val CATALOG_SYNC = "catalog-sync"
         const val CATALOG_SYNC_NOW = "catalog-sync-now"
+        const val CATALOG_STEP = "catalog-step"
         const val HEALTH_SWEEP = "health-sweep"
         const val FAVORITES_HEALTH = "favorites-health"
         const val EPG_SYNC = "epg-sync"
