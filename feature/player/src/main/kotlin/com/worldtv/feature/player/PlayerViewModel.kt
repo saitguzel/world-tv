@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
+import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.worldtv.core.model.Channel
@@ -56,6 +57,13 @@ data class PlayerUiState(
     val showTrackPicker: Boolean = false,
     val subtitleTracks: List<MediaTrack> = emptyList(),
     val audioTracks: List<MediaTrack> = emptyList(),
+    /**
+     * Shape of the video, for the phone player. A television fills the screen and never
+     * needs this; a phone in portrait would stretch or crop without it.
+     */
+    val videoAspectRatio: Float = DEFAULT_ASPECT_RATIO,
+    /** Unused on TV, where live streams are never paused. */
+    val isPlaying: Boolean = false,
 )
 
 @HiltViewModel
@@ -158,6 +166,22 @@ class PlayerViewModel @Inject constructor(
             if (playbackState == Player.STATE_READY && confirmation.onReady()) {
                 confirmPlaybackWorking()
             }
+        }
+
+        override fun onVideoSizeChanged(videoSize: VideoSize) {
+            _uiState.update {
+                it.copy(
+                    videoAspectRatio = videoAspectRatio(
+                        width = videoSize.width,
+                        height = videoSize.height,
+                        pixelWidthHeightRatio = videoSize.pixelWidthHeightRatio,
+                    ),
+                )
+            }
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            _uiState.update { it.copy(isPlaying = isPlaying) }
         }
 
         override fun onTracksChanged(tracks: Tracks) {
@@ -341,6 +365,17 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun toggleOverlay() = _uiState.update { it.copy(showOverlay = !it.showOverlay) }
+
+    /**
+     * Pause and resume.
+     *
+     * The app had no such action at all: a remote has dedicated media keys and these
+     * are live streams, so nothing on TV ever needed one. A phone HUD without a play
+     * button is simply incomplete.
+     */
+    fun togglePlayPause() {
+        player.playWhenReady = !player.playWhenReady
+    }
 
     fun openTrackPicker() =
         _uiState.update { it.copy(showTrackPicker = true, showOverlay = false) }

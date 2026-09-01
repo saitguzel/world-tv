@@ -1,17 +1,8 @@
 package com.worldtv.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -22,6 +13,7 @@ import com.worldtv.feature.catalog.mobile.MobileBrowseScreen
 import com.worldtv.feature.catalog.mobile.MobileHomeScreen
 import com.worldtv.feature.catalog.mobile.MobileSearchScreen
 import com.worldtv.feature.favorites.mobile.MobileFavoritesScreen
+import com.worldtv.feature.player.mobile.MobilePlayerScreen
 import com.worldtv.feature.radio.mobile.MobileRadioScreen
 import com.worldtv.feature.settings.mobile.MobileSettingsScreen
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,23 +88,11 @@ fun MobileNavHost(
             route = Routes.PLAYER,
             arguments = listOf(navArgument("channelId") { type = NavType.StringType }),
         ) { entry ->
-            ComingSoon("Oynatıcı: " + entry.arguments?.getString("channelId").orEmpty())
+            MobilePlayerScreen(
+                channelId = entry.arguments?.getString("channelId").orEmpty(),
+                onBack = { navController.popBackStack() },
+            )
         }
     }
 }
 
-/** Names the destination so the shell can be walked and verified before it has content. */
-@Composable
-private fun ComingSoon(destination: String, modifier: Modifier = Modifier) {
-    Box(
-        modifier.fillMaxSize().padding(24.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = destination,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-        )
-    }
-}

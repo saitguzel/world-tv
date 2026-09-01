@@ -18,4 +18,8 @@
     <string name="tracks_off">Kapalı</string>
     <string name="tracks_unknown">Bilinmeyen</string>
     <string name="tracks_none">Bu yayında seçilebilir altyazı veya ses parçası yok</string>
+
+    <!-- Phone HUD. A remote has dedicated media keys, so TV never needed these. -->
+    <string name="player_play">Çal</string>
+    <string name="player_pause">Duraklat</string>
 </resources>
