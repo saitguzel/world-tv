@@ -35,6 +35,9 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val countries by viewModel.countries.collectAsStateWithLifecycle()
+    var countryPickerOpen by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier
             .fillMaxSize()
@@ -89,6 +92,39 @@ fun SettingsScreen(
                 checked = state.preferences.reduceMotion,
                 onCheckedChange = viewModel::setReduceMotion,
             )
+        }
+
+        item {
+            // Collapsed by default: the list runs to a couple of hundred entries, and
+            // an always-open one would bury every setting below it behind a very long
+            // D-pad walk.
+            ListItem(
+                selected = countryPickerOpen,
+                onClick = { countryPickerOpen = !countryPickerOpen },
+                headlineContent = { Text(stringResource(R.string.settings_home_country)) },
+                supportingContent = {
+                    val current = countries.firstOrNull { it.code == state.preferences.homeCountry }
+                    Text(
+                        current?.let { "${it.flag} ${it.name}" }
+                            ?: state.preferences.homeCountry
+                            ?: stringResource(R.string.settings_home_country_none),
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (countryPickerOpen) {
+            items(countries, key = { it.code }) { country ->
+                ListItem(
+                    selected = country.code == state.preferences.homeCountry,
+                    onClick = {
+                        viewModel.setHomeCountry(country.code)
+                        countryPickerOpen = false
+                    },
+                    headlineContent = { Text("${country.flag} ${country.name}") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
 
         item {

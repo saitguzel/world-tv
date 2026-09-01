@@ -6,6 +6,8 @@ import com.worldtv.data.repository.HealthAggressiveness
 import com.worldtv.data.repository.HealthRepository
 import com.worldtv.data.repository.UserPreferences
 import com.worldtv.data.repository.SyncTrigger
+import com.worldtv.core.model.Country
+import com.worldtv.data.repository.ChannelRepository
 import com.worldtv.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -25,6 +27,7 @@ data class SettingsUiState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val preferences: UserPreferencesRepository,
+    private val channelRepository: ChannelRepository,
     private val healthRepository: HealthRepository,
     private val syncTrigger: SyncTrigger,
 ) : ViewModel() {
@@ -53,6 +56,19 @@ class SettingsViewModel @Inject constructor(
      * minutes on a large catalog.
      */
     fun recheckEverything() = viewModelScope.launch { healthRepository.recheckAll() }
+
+    /**
+     * Countries with live channels, for the home-country picker.
+     *
+     * Home country is not cosmetic: it seeds the browse filter, decides which bucket
+     * the health sweep probes first, and picks which radio countries are synced.
+     */
+    val countries: StateFlow<List<Country>> = channelRepository.countries()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun setHomeCountry(code: String) = viewModelScope.launch {
+        preferences.setHomeCountry(code)
+    }
 
     fun setShowNsfw(value: Boolean) = viewModelScope.launch { preferences.setShowNsfw(value) }
 

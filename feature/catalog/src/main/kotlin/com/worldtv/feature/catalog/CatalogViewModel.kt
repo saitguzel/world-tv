@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -79,6 +80,20 @@ class CatalogViewModel @Inject constructor(
     private val _filter = MutableStateFlow(CatalogFilter())
     val filter: StateFlow<CatalogFilter> = _filter.asStateFlow()
 
+    init {
+        // Open on the user's home country rather than the whole world: the full
+        // catalog is tens of thousands of channels and almost none of them are the
+        // one they want. An explicit country from a deep link still wins, because it
+        // arrives through setCountry after this and only an untouched filter is
+        // seeded here.
+        viewModelScope.launch {
+            val home = preferencesRepository.homeCountry()
+            if (home != null && _filter.value == CatalogFilter()) {
+                _filter.value = CatalogFilter(country = home)
+            }
+        }
+    }
+
     val countries: StateFlow<List<Country>> = channelRepository.countries()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -92,12 +107,20 @@ class CatalogViewModel @Inject constructor(
         // importantly here, across the drawer opening and closing.
         .cachedIn(viewModelScope)
 
+    /**
+     * Country and category narrow together rather than replacing each other, so
+     * "Turkey" and "News" can both be on. Passing null clears just that one.
+     */
     fun setCountry(code: String?) {
-        _filter.value = CatalogFilter(country = code, category = null)
+        _filter.update { it.copy(country = code) }
     }
 
     fun setCategory(id: String?) {
-        _filter.value = CatalogFilter(country = null, category = id)
+        _filter.update { it.copy(category = id) }
+    }
+
+    fun clearFilters() {
+        _filter.value = CatalogFilter()
     }
 
     /**

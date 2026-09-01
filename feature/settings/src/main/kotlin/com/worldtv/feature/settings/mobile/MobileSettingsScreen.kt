@@ -4,7 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
@@ -14,6 +16,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -22,6 +25,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -54,7 +60,9 @@ fun MobileSettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val countries by viewModel.countries.collectAsStateWithLifecycle()
     val prefs = state.preferences
+    var countrySheetOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
@@ -70,6 +78,17 @@ fun MobileSettingsScreen(
         },
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+            item {
+                val current = countries.firstOrNull { it.code == prefs.homeCountry }
+                ActionRow(
+                    title = stringResource(R.string.settings_home_country),
+                    subtitle = current?.let { "${it.flag} ${it.name}" }
+                        ?: prefs.homeCountry
+                        ?: stringResource(R.string.settings_home_country_none),
+                    onClick = { countrySheetOpen = true },
+                )
+            }
+            item { HorizontalDivider() }
             item {
                 SwitchRow(
                     title = stringResource(R.string.settings_show_nsfw),
@@ -172,6 +191,33 @@ fun MobileSettingsScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp),
                 )
+            }
+        }
+
+        if (countrySheetOpen) {
+            ModalBottomSheet(onDismissRequest = { countrySheetOpen = false }) {
+                LazyColumn(Modifier.heightIn(max = 420.dp)) {
+                    items(countries.size, key = { countries[it].code }) { index ->
+                        val country = countries[index]
+                        ListItem(
+                            modifier = Modifier.selectable(
+                                selected = country.code == prefs.homeCountry,
+                                role = Role.RadioButton,
+                                onClick = {
+                                    viewModel.setHomeCountry(country.code)
+                                    countrySheetOpen = false
+                                },
+                            ),
+                            headlineContent = { Text("${country.flag} ${country.name}") },
+                            leadingContent = {
+                                RadioButton(
+                                    selected = country.code == prefs.homeCountry,
+                                    onClick = null,
+                                )
+                            },
+                        )
+                    }
+                }
             }
         }
     }

@@ -42,11 +42,19 @@ enum class HealthAggressiveness {
     }
 }
 
+/** Where a fresh install starts. Changeable from settings. */
+const val DEFAULT_HOME_COUNTRY = "TR"
+
 data class UserPreferences(
     val showNsfw: Boolean = false,
     val showUnchecked: Boolean = true,
     val showGeoBlocked: Boolean = true,
-    val homeCountry: String? = null,
+    /**
+     * Seeds the browse filter, the health sweep's priority bucket and which radio
+     * countries are synced. Defaults to [DEFAULT_HOME_COUNTRY] rather than null so a
+     * fresh install opens on something rather than on the whole world.
+     */
+    val homeCountry: String? = DEFAULT_HOME_COUNTRY,
     val lastMode: String = "TV",
     val healthAggressiveness: HealthAggressiveness = HealthAggressiveness.BALANCED,
     val reduceMotion: Boolean = false,
@@ -65,7 +73,7 @@ class UserPreferencesRepository @Inject constructor(
             showNsfw = prefs[SHOW_NSFW] ?: false,
             showUnchecked = prefs[SHOW_UNCHECKED] ?: true,
             showGeoBlocked = prefs[SHOW_GEO_BLOCKED] ?: true,
-            homeCountry = prefs[HOME_COUNTRY],
+            homeCountry = prefs[HOME_COUNTRY] ?: DEFAULT_HOME_COUNTRY,
             lastMode = prefs[LAST_MODE] ?: "TV",
             healthAggressiveness = prefs[HEALTH_AGGRESSIVENESS]
                 ?.let { runCatching { HealthAggressiveness.valueOf(it) }.getOrNull() }
