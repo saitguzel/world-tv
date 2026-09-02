@@ -3,24 +3,12 @@
 // those are separate CompositionLocal trees, and mixing them compiles silently and
 // renders wrongly. A module boundary turns that class of bug into a compile error.
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.compose)
+    id("worldtv.android.library")
+    id("worldtv.android.compose")
 }
 
 android {
     namespace = "com.worldtv.core.designsystem.tv"
-    compileSdk = 37
-
-    defaultConfig {
-        minSdk = 23
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    buildFeatures {
-        compose = true
-    }
 }
 
 dependencies {
