@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -65,6 +67,10 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.worldtv.core.designsystem.component.HealthDot
+import com.worldtv.core.model.ChannelSummary
+import com.worldtv.core.model.MediaTrack
+
+
 import com.worldtv.core.designsystem.mobile.component.FullscreenExitIcon
 import com.worldtv.core.designsystem.mobile.component.FullscreenIcon
 import com.worldtv.core.designsystem.mobile.component.PauseIcon
@@ -281,31 +287,12 @@ fun MobilePlayerScreen(
             onDismissRequest = viewModel::closeChannelDrawer,
             sheetState = channelSheet,
         ) {
-            LazyColumn(state = listState) {
-                items(drawerChannels.size, key = { drawerChannels[it].channel.id }) { index ->
-                    val summary = drawerChannels[index]
-                    ListItem(
-                        // Material 3's ListItem has no onClick of its own. Without this
-                        // the drawer listed every channel and selected none of them.
-                        modifier = Modifier.clickable {
-                            viewModel.jumpTo(summary.channel.id)
-                        },
-                        headlineContent = {
-                            Text(
-                                summary.channel.name,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = if (summary.channel.id == state.channel?.id) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                },
-                            )
-                        },
-                        leadingContent = { HealthDot(summary.healthBadge) },
-                    )
-                }
-            }
+            ChannelDrawerList(
+                channels = drawerChannels,
+                currentId = state.channel?.id,
+                listState = listState,
+                onSelect = viewModel::jumpTo,
+            )
         }
     }
 
@@ -314,22 +301,10 @@ fun MobilePlayerScreen(
             onDismissRequest = viewModel::closeTrackPicker,
             sheetState = trackSheet,
         ) {
-            LazyColumn {
-                items(state.subtitleTracks.size + state.audioTracks.size) { index ->
-                    val track = (state.subtitleTracks + state.audioTracks)[index]
-                    ListItem(
-                        // Same trap as the channel drawer: without a clickable wrapper
-                        // the track list is a display, not a picker.
-                        modifier = Modifier.clickable { viewModel.selectTrack(track) },
-                        headlineContent = { Text(track.label) },
-                        leadingContent = if (track.isSelected) {
-                            { Icon(Icons.Filled.Check, contentDescription = null) }
-                        } else {
-                            null
-                        },
-                    )
-                }
-            }
+            TrackList(
+                tracks = state.subtitleTracks + state.audioTracks,
+                onSelect = viewModel::selectTrack,
+            )
         }
     }
 }
@@ -461,3 +436,65 @@ private fun Hud(
 }
 
 private const val OVERLAY_TIMEOUT_MS = 3_000L
+
+/**
+ * The channel drawer's body, kept apart from the sheet so a test can render it.
+ *
+ * Material 3's ListItem has no onClick of its own. Without the clickable wrapper the
+ * drawer listed every channel and selected none of them — the regression the screen
+ * test guards.
+ */
+@Composable
+internal fun ChannelDrawerList(
+    channels: List<ChannelSummary>,
+    currentId: String?,
+    listState: LazyListState,
+    onSelect: (String) -> Unit,
+) {
+    LazyColumn(state = listState) {
+        items(channels.size, key = { channels[it].channel.id }) { index ->
+            val summary = channels[index]
+            ListItem(
+                modifier = Modifier.clickable { onSelect(summary.channel.id) },
+                headlineContent = {
+                    Text(
+                        summary.channel.name,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = if (summary.channel.id == currentId) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                    )
+                },
+                leadingContent = { HealthDot(summary.healthBadge) },
+            )
+        }
+    }
+}
+
+/**
+ * The track picker's body. Same trap as the drawer: without the clickable wrapper the
+ * track list is a display, not a picker.
+ */
+@Composable
+internal fun TrackList(
+    tracks: List<MediaTrack>,
+    onSelect: (MediaTrack) -> Unit,
+) {
+    LazyColumn {
+        items(tracks.size) { index ->
+            val track = tracks[index]
+            ListItem(
+                modifier = Modifier.clickable { onSelect(track) },
+                headlineContent = { Text(track.label) },
+                leadingContent = if (track.isSelected) {
+                    { Icon(Icons.Filled.Check, contentDescription = null) }
+                } else {
+                    null
+                },
+            )
+        }
+    }
+}

@@ -20,6 +20,10 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        // Robolectric needs the merged resources to resolve stringResource() calls.
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -59,6 +63,15 @@ dependencies {
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlinx.coroutines.test)
     testRuntimeOnly(libs.junit.platform.launcher)
+
+    // Screen tests on the JVM. Robolectric hosts the Compose test rule; that rule is a
+    // JUnit 4 Rule, and this module runs on the JUnit Platform, so the vintage engine
+    // is what makes those tests execute at all — without it they are silently skipped.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.junit4)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    testRuntimeOnly(libs.junit.vintage.engine)
 }
 
 tasks.withType<Test>().configureEach { useJUnitPlatform() }
