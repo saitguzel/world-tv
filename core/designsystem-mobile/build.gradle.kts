@@ -3,24 +3,12 @@
 // androidx.compose.material3 are different CompositionLocal trees, and a component
 // rendered under the wrong one compiles and runs while silently drawing wrong.
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.compose)
+    id("worldtv.android.library")
+    id("worldtv.android.compose")
 }
 
 android {
     namespace = "com.worldtv.core.designsystem.mobile"
-    compileSdk = 37
-
-    defaultConfig {
-        minSdk = 23
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    buildFeatures {
-        compose = true
-    }
 }
 
 dependencies {
@@ -39,5 +27,3 @@ dependencies {
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
-
-tasks.withType<Test>().configureEach { useJUnitPlatform() }
