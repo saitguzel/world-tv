@@ -1,21 +1,15 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
+    id("worldtv.android.application")
+    id("worldtv.android.compose")
+    id("worldtv.android.hilt")
 }
 
 android {
     namespace = "com.worldtv"
-    compileSdk = 37
-
     defaultConfig {
         applicationId = "com.worldtv"
-        minSdk = 23
-        targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -30,15 +24,6 @@ android {
         debug {
             applicationIdSuffix = ".debug"
         }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        compose = true
     }
 
     packaging {
@@ -82,9 +67,6 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
 
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
-
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
@@ -99,5 +81,3 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }
-
-tasks.withType<Test>().configureEach { useJUnitPlatform() }
