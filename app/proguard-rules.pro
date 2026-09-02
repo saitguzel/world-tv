@@ -27,3 +27,8 @@
 
 # WorkManager workers are instantiated by name.
 -keep class * extends androidx.work.ListenableWorker { <init>(...); }
+
+# Deliberately absent: -keepattributes Signature,InnerClasses,EnclosingMethod and the
+# runtime-annotation attributes. Retrofit, kotlinx.serialization and Hilt ship them as
+# consumer rules; check build/outputs/mapping/release/configuration.txt before adding
+# a duplicate here.

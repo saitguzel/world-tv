@@ -70,6 +70,13 @@ jobs:
       - name: Assemble
         run: ./gradlew --no-daemon assembleDebug
 
+      # R8 only runs on release, and a missing keep rule surfaces as a crash on a
+      # device, not as a build failure — unless the release variant is actually built.
+      # The APK stays unsigned: signing is a separate concern and the keystore is a
+      # secret this workflow does not hold.
+      - name: Assemble release (R8, unsigned)
+        run: ./gradlew --no-daemon assembleRelease
+
       # --continue so every module's lint runs even after one fails. Without it the
       # build stops at the first failing module and a run only ever reveals one
       # module's findings; the exit code, and so the gate, is unchanged.
@@ -81,6 +88,13 @@ jobs:
         with:
           name: worldtv-debug
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload unsigned release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldtv-release-unsigned
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
       - name: Upload lint reports
