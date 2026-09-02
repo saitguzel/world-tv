@@ -3,12 +3,7 @@
 // what makes `./gradlew :data:health:test` run in milliseconds on the JVM.
 // It is also the KMP-ready seam described in the architecture doc.
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    id("worldtv.jvm.library")
 }
 
 kotlin {
@@ -28,5 +23,3 @@ dependencies {
     testImplementation(libs.okhttp.mockwebserver)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
-
-tasks.withType<Test>().configureEach { useJUnitPlatform() }

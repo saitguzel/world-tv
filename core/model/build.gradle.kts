@@ -1,10 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    id("worldtv.jvm.library")
 }
 
 kotlin {
@@ -17,5 +12,3 @@ dependencies {
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
-
-tasks.withType<Test>().configureEach { useJUnitPlatform() }
