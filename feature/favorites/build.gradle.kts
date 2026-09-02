@@ -1,25 +1,11 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.kotlin.compose)
+    id("worldtv.android.library")
+    id("worldtv.android.compose")
+    id("worldtv.android.hilt")
 }
 
 android {
     namespace = "com.worldtv.feature.favorites"
-    compileSdk = 37
-
-    defaultConfig {
-        minSdk = 23
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    buildFeatures {
-        compose = true
-    }
 }
 
 dependencies {
@@ -40,7 +26,4 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.paging.compose)
     implementation(libs.coil.compose)
-
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
 }
