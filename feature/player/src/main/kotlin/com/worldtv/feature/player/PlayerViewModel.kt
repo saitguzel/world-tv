@@ -11,6 +11,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.worldtv.core.model.Channel
 import com.worldtv.core.model.ChannelQueue
 import com.worldtv.core.common.CaptionSettings
+import com.worldtv.core.common.playback.VideoPlaybackSignal
 import com.worldtv.core.model.ChannelSummary
 import com.worldtv.core.model.MediaTrack
 import com.worldtv.core.model.TrackType
@@ -77,6 +78,7 @@ class PlayerViewModel @Inject constructor(
     private val captionSettings: CaptionSettings,
     private val labels: PlayerLabels,
     private val time: TimeProvider,
+    private val videoSignal: VideoPlaybackSignal,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -111,6 +113,9 @@ class PlayerViewModel @Inject constructor(
 
     val player: ExoPlayer by lazy {
         playerFactory.create().also { exoPlayer ->
+            // The one place an ExoPlayer comes into existence, on both form factors.
+            // Tells the radio a video now holds audio focus.
+            videoSignal.acquire()
             exoPlayer.addListener(listener)
             // Standing preference applied before anything loads, since the stream's
             // tracks are not known yet.
@@ -414,6 +419,9 @@ class PlayerViewModel @Inject constructor(
     override fun onCleared() {
         player.removeListener(listener)
         player.release()
+        // After release, not before: release is what actually abandons audio focus, and
+        // the radio resuming earlier would collide with a player still holding it.
+        videoSignal.release()
         super.onCleared()
     }
 

@@ -11,6 +11,7 @@ import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.worldtv.core.network.di.MediaClient
 import com.worldtv.data.sync.SyncScheduler
+import com.worldtv.feature.radio.RadioController
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import okhttp3.OkHttpClient
@@ -22,6 +23,14 @@ class WorldTvApplication : Application(), Configuration.Provider, SingletonImage
     @Inject lateinit var workerFactory: HiltWorkerFactory
 
     @Inject lateinit var syncScheduler: SyncScheduler
+
+    // Injected for its side effect: RadioController's resume collector only exists once
+    // something constructs the singleton. On a phone the now-playing bar does that on
+    // every start; on TV nothing does until the radio screen opens, so a viewer who
+    // watches video first and then radio would get no resume until then. This does NOT
+    // call connect() — binding the media service at process start would start it for
+    // nothing.
+    @Inject lateinit var radioController: RadioController
 
     @Inject @field:MediaClient lateinit var okHttpClient: OkHttpClient
 

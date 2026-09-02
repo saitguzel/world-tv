@@ -27,6 +27,14 @@ class MiniPlayerViewModel @Inject constructor(
     val nowPlaying: StateFlow<RadioStation?> = controller.nowPlaying
     val isPlaying: StateFlow<Boolean> = controller.isPlaying
 
+    init {
+        // Connect now rather than on first tap: the service may have outlived the
+        // process, and the bar is the thing that needs that restored state. This is
+        // the bar's view model, constructed on every phone start, so binding here does
+        // not start a service at process launch the way doing it in Application would.
+        controller.connect()
+    }
+
     fun togglePlayPause() = controller.togglePlayPause()
 
     fun stop() = controller.stop()
