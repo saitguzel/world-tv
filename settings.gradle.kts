@@ -1,4 +1,8 @@
 pluginManagement {
+    // Convention plugins (worldtv.android.library and friends). An included build rather
+    // than buildSrc: buildSrc is prepended to every build script's classloader and would
+    // override the Kotlin Gradle plugin pinned in the root build.gradle.kts.
+    includeBuild("build-logic")
     repositories {
         google {
             content {

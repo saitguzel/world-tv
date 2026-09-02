@@ -60,6 +60,9 @@ androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime", 
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 
 # --- Compose ---
+# Compile-time only, for build-logic: the convention plugins are written against the
+# AGP DSL. Never put this on a runtime classpath — see build-logic/convention.
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
