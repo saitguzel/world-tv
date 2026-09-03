@@ -2,6 +2,7 @@ package com.worldtv.feature.catalog
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.worldtv.core.common.network.NetworkMonitor
 import com.worldtv.core.model.ChannelSummary
 import com.worldtv.core.model.Country
 import com.worldtv.data.repository.ChannelRepository
@@ -22,8 +23,20 @@ data class HomeUiState(
     val recents: List<ChannelSummary> = emptyList(),
     val favorites: List<ChannelSummary> = emptyList(),
     val countries: List<Country> = emptyList(),
-    val isEmpty: Boolean = true,
-)
+    /**
+     * Whether the catalog itself has been downloaded, whatever else is missing; null
+     * until the database has answered, so the download prompt does not flash on every
+     * start while the count is still being read.
+     */
+    val hasCatalog: Boolean? = null,
+) {
+    /**
+     * Driven by catalog presence rather than by the individual rows: the countries
+     * step of the sync can fail while channels land, and treating "no countries" as
+     * "no catalog" is what made the download prompt come back on every start.
+     */
+    val isEmpty: Boolean get() = hasCatalog == false
+}
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -31,23 +44,29 @@ class HomeViewModel @Inject constructor(
     private val healthRepository: HealthRepository,
     private val playbackQueue: PlaybackQueueHolder,
     private val syncTrigger: SyncTrigger,
+    private val networkMonitor: NetworkMonitor,
 ) : ViewModel() {
 
     val isSyncing: StateFlow<Boolean> = syncTrigger.isSyncing
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    /** Whether the device has any connectivity, for the empty-state copy on Home. */
+    val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
+        // Optimistic until the first reading lands: "no connection" is the more
+        // alarming thing to flash at a user who is, in fact, online.
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
     val uiState: StateFlow<HomeUiState> = combine(
         channelRepository.recents(limit = 12),
         channelRepository.favorites(),
         channelRepository.countries().map { it.take(FEATURED_COUNTRIES) },
-    ) { recents, favorites, countries ->
+        channelRepository.channelCount(),
+    ) { recents, favorites, countries, channelCount ->
         HomeUiState(
             recents = recents,
             favorites = favorites,
             countries = countries,
-            // Nothing anywhere means the first catalog sync has not landed yet, and
-            // the screen should say so rather than showing three empty rows.
-            isEmpty = recents.isEmpty() && favorites.isEmpty() && countries.isEmpty(),
+            hasCatalog = channelCount > 0,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
@@ -57,10 +76,13 @@ class HomeViewModel @Inject constructor(
         // home screen — and an empty catalog also means no countries and no
         // categories, which makes the filters look broken rather than unpopulated.
         //
-        // A single read rather than a subscription: uiState is WhileSubscribed and
-        // collecting it here would keep it warm for the life of the view model.
+        // Waits for connectivity rather than giving up on an offline start: the copy on
+        // the empty Home promises the download starts by itself once the network is
+        // back, and enqueueing while offline would only REPLACE the retrying chain with
+        // one that fails on arrival — the churn that made "download now" feel permanent.
         viewModelScope.launch {
-            if (channelRepository.countries().first().isEmpty()) {
+            networkMonitor.isOnline.first { it }
+            if (channelRepository.channelCount().first() == 0) {
                 syncTrigger.syncNow()
             }
         }

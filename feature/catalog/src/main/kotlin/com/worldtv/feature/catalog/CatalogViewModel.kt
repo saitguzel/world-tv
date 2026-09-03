@@ -142,6 +142,24 @@ class CatalogViewModel @Inject constructor(
         playbackQueue.setQueue(channelIds, startId)
     }
 
+    /**
+     * Picks one random channel from the current country/category filter and hands
+     * the player a queue for it, returning the id to navigate to (or null when the
+     * filter has nothing live).
+     *
+     * The repository honours every filter the grid honours, so the pick is never
+     * something the user could not have found by scrolling. The queue is the grid the
+     * user is looking at, with the pick prepended when it has not been paged in yet —
+     * otherwise up/down would zap through whatever list the player had last.
+     */
+    suspend fun openRandomChannel(loadedIds: List<String>): String? {
+        val pick = channelRepository.randomChannel(_filter.value.country, _filter.value.category)
+            ?: return null
+        val id = pick.channel.id
+        playbackQueue.setQueue(if (id in loadedIds) loadedIds else listOf(id) + loadedIds, id)
+        return id
+    }
+
     /** Long-press on a card. */
     fun toggleFavorite(channelId: String, currentlyFavorite: Boolean) {
         viewModelScope.launch {

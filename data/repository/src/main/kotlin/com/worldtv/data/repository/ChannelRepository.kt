@@ -23,6 +23,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -86,17 +87,51 @@ class ChannelRepository @Inject constructor(
      * Search over the folded haystack.
      *
      * The query is normalised with the same function used at write time — otherwise a
-     * user typing "türk" would never match the stored "turk".
+     * user typing "türk" would never match the stored "turk". The optional country
+     * narrows results the way the browse grid does, so search can default to where the
+     * user is rather than searching the whole world.
      */
-    fun search(query: String, limit: Int = 60): Flow<List<ChannelSummary>> {
+    fun search(
+        query: String,
+        country: String? = null,
+        limit: Int = 60,
+    ): Flow<List<ChannelSummary>> {
         val normalized = TextNormalizer.normalize(query)
         return combine(
             preferences.preferences,
-            channelDao.search(normalized, showNsfw = false, limit = limit),
+            channelDao.search(normalized, showNsfw = false, country = country, limit = limit),
         ) { prefs, rows ->
             if (prefs.showNsfw) rows else rows.filterNot { it.isNsfw }
         }.map { rows -> rows.map(ChannelWithHealth::toSummary) }
     }
+
+    /**
+     * One live channel honouring the current browse filters, for the random button.
+     *
+     * The query itself hides everything the grid hides (dead streams, blocked
+     * channels, NSFW when disabled), so the random pick is never something the user
+     * could not have found by scrolling.
+     */
+    suspend fun randomChannel(country: String?, category: String?): ChannelSummary? =
+        withContext(io) {
+            val prefs = preferences.preferences.first()
+            channelDao.randomChannel(
+                country = country,
+                category = category,
+                showNsfw = prefs.showNsfw,
+                showGeoBlocked = prefs.showGeoBlocked,
+                showUnchecked = prefs.showUnchecked,
+            )?.toSummary()
+        }
+
+    /**
+     * Whether the catalog has been downloaded at all.
+     *
+     * This is the home screen's emptiness signal — countries or categories could fail
+     * to fetch while channels land, and treating "no countries" as "no catalog" is
+     * what made the download prompt come back on every start.
+     */
+    fun channelCount(): Flow<Int> = channelDao.channelCountFlow()
 
     /**
      * Playable streams for a channel, best first.

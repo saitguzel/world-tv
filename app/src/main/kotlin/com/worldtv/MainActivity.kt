@@ -18,6 +18,7 @@ import com.worldtv.core.designsystem.mobile.theme.WorldTvMobileTheme
 import com.worldtv.core.designsystem.theme.LocalFormFactor
 import com.worldtv.core.designsystem.tv.theme.WorldTvTheme
 import com.worldtv.data.repository.UserPreferencesRepository
+import com.worldtv.feature.radio.RadioController
 import com.worldtv.navigation.MobileApp
 import com.worldtv.navigation.WorldTvNavHost
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,6 +34,8 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var preferences: UserPreferencesRepository
 
     @Inject lateinit var device: DeviceCapabilities
+
+    @Inject lateinit var radioController: RadioController
 
     /** Latest query handed over by Assistant or global search. */
     private val voiceQuery = MutableStateFlow<String?>(null)
@@ -84,6 +87,22 @@ class MainActivity : ComponentActivity() {
      * Assistant delivers a query through a new intent when the app is already running,
      * so reading it once in [onCreate] would miss every search after the first.
      */
+    /**
+     * App closed for real: stop the radio.
+     *
+     * Video already dies with the activity (its view model releases the player), but
+     * the radio controller is a process singleton with no screen to release it, so an
+     * exit would leave the session audibly playing in the background. `isFinishing`
+     * keeps configuration changes and background kills from stopping it; only a
+     * genuine finish (exit button, back-to-exit, swipe-away) does.
+     */
+    override fun onDestroy() {
+        if (isFinishing) {
+            radioController.stop()
+        }
+        super.onDestroy()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)

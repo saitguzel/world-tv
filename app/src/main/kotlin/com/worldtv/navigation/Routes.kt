@@ -13,7 +13,7 @@ object Routes {
     const val HOME = "home"
     const val BROWSE = "browse?country={country}"
     const val SEARCH = "search"
-    const val RADIO = "radio"
+    const val RADIO = "radio?station={station}"
     const val FAVORITES = "favorites"
     const val SETTINGS = "settings"
     const val PLAYER = "player/{channelId}"
@@ -21,11 +21,21 @@ object Routes {
     /** The browse pattern without its optional argument; the nav bar matches on this. */
     const val BROWSE_BASE = "browse"
 
+    /** The radio pattern without its optional argument; the nav bar matches on this. */
+    const val RADIO_BASE = "radio"
+
     /** Prefix the player uses, so chrome can be hidden without parsing arguments. */
     const val PLAYER_PREFIX = "player/"
 
     fun browse(country: String? = null): String =
         if (country == null) BROWSE_BASE else "$BROWSE_BASE?country=$country"
+
+    /**
+     * The radio destination. A station uuid starts it playing — that is how a search
+     * result hands a station over — while a plain visit opens the usual list.
+     */
+    fun radio(station: String? = null): String =
+        if (station == null) RADIO_BASE else "$RADIO_BASE?station=$station"
 
     fun player(channelId: String) = "$PLAYER_PREFIX$channelId"
 
@@ -35,7 +45,7 @@ object Routes {
      * Five, deliberately: Settings is reached from Home's app bar instead. Six crowds a
      * bottom bar, and Settings is the one nobody visits twice.
      */
-    val TOP_LEVEL: List<String> = listOf(HOME, BROWSE_BASE, SEARCH, RADIO, FAVORITES)
+    val TOP_LEVEL: List<String> = listOf(HOME, BROWSE_BASE, SEARCH, RADIO_BASE, FAVORITES)
 
     /** True while the player is on screen — when the phone hides its chrome. */
     fun isPlayer(route: String?): Boolean = route?.startsWith(PLAYER_PREFIX) == true

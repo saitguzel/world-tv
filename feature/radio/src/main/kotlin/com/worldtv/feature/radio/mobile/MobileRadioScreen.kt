@@ -1,11 +1,10 @@
 package com.worldtv.feature.radio.mobile
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,14 +35,17 @@ import androidx.paging.compose.itemKey
 import com.worldtv.core.designsystem.component.HealthDot
 import com.worldtv.core.model.RadioStation
 import com.worldtv.feature.radio.R
-import com.worldtv.feature.radio.badge
-import com.worldtv.feature.radio.describe
 import com.worldtv.feature.radio.RadioViewModel
+import com.worldtv.core.model.badge
+import com.worldtv.core.model.describe
+import com.worldtv.core.designsystem.component.ShuffleIcon
 
 /**
  * Radio, for touch.
  *
- * The 280dp country rail becomes a sheet, as on browse.
+ * The 280dp country rail becomes a sheet, as on browse — now with the category facet
+ * alongside it, since radio is required to filter the same two ways the channel grid
+ * does.
  *
  * The more consequential difference is that this screen has transport controls at all.
  * The TV screen deliberately has none: a remote has dedicated media keys and the
@@ -65,8 +67,11 @@ fun MobileRadioScreen(
 ) {
     val stations = viewModel.stations.collectAsLazyPagingItems()
     val countries by viewModel.availableCountries.collectAsStateWithLifecycle()
+    val categories by viewModel.availableCategories.collectAsStateWithLifecycle()
     val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
+    val selectedCountry by viewModel.country.collectAsStateWithLifecycle()
+    val selectedCategory by viewModel.category.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState()
     var sheetOpen by remember { mutableStateOf(false) }
@@ -84,6 +89,9 @@ fun MobileRadioScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.radio_title)) },
                 actions = {
+                    IconButton(onClick = viewModel::playRandom) {
+                        Icon(ShuffleIcon, contentDescription = stringResource(R.string.radio_random))
+                    }
                     IconButton(onClick = { sheetOpen = true }) {
                         Icon(
                             Icons.AutoMirrored.Filled.List,
@@ -95,6 +103,41 @@ fun MobileRadioScreen(
         },
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+            // Favourites first, exactly as on the TV screen: a touch list is just as
+            // deep as a D-pad one, and scrolling to a favourite is not viable either
+            // way. A long press anywhere adds or removes, and the row marks itself.
+            if (favorites.isNotEmpty()) {
+                item {
+                    Text(
+                        text = stringResource(R.string.radio_favorites),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
+                items(favorites, key = { "fav-" + it.uuid }) { station ->
+                    StationRow(
+                        station = station,
+                        isFavorite = true,
+                        isCurrent = station.uuid == nowPlaying?.uuid,
+                        onClick = {
+                            requestNotifications()
+                            viewModel.play(station)
+                        },
+                        onLongClick = {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            viewModel.toggleFavorite(station.uuid, currentlyFavorite = true)
+                        },
+                    )
+                }
+                item {
+                    Text(
+                        text = stringResource(R.string.radio_all_stations),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
+            }
+
             items(
                 count = stations.itemCount,
                 key = stations.itemKey { it.uuid },
@@ -118,27 +161,16 @@ fun MobileRadioScreen(
         }
 
         if (sheetOpen) {
-            ModalBottomSheet(onDismissRequest = { sheetOpen = false }, sheetState = sheetState) {
-                LazyColumn(Modifier.heightIn(max = 420.dp)) {
-                    item {
-                        ListItem(
-                            modifier = Modifier.clickable {
-                                viewModel.setCountry(null); sheetOpen = false
-                            },
-                            headlineContent = { Text(stringResource(R.string.radio_all_countries)) },
-                        )
-                    }
-                    items(countries.size, key = { countries[it].code }) { index ->
-                        val country = countries[index]
-                        ListItem(
-                            modifier = Modifier.clickable {
-                                viewModel.setCountry(country.code); sheetOpen = false
-                            },
-                            headlineContent = { Text("${country.flag} ${country.name}") },
-                        )
-                    }
-                }
-            }
+            RadioFilterSheet(
+                countries = countries,
+                categories = categories,
+                selectedCountry = selectedCountry,
+                selectedCategory = selectedCategory,
+                sheetState = sheetState,
+                onCountry = { viewModel.setCountry(it); sheetOpen = false },
+                onCategory = { viewModel.setCategory(it); sheetOpen = false },
+                onDismiss = { sheetOpen = false },
+            )
         }
     }
 }
@@ -175,4 +207,3 @@ private fun StationRow(
         leadingContent = { HealthDot(station.badge()) },
     )
 }
-

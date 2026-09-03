@@ -38,6 +38,8 @@ import com.worldtv.core.designsystem.mobile.component.MobileChannelCard
 import com.worldtv.core.model.ChannelSummary
 import com.worldtv.feature.catalog.HomeViewModel
 import com.worldtv.feature.catalog.R
+import androidx.compose.foundation.layout.size
+import com.worldtv.core.designsystem.component.WifiOffIcon
 
 /** Cards in a shelf need a width; the grid gets its own from GridCells.Adaptive. */
 private val ShelfCardWidth = 160.dp
@@ -71,6 +73,7 @@ fun MobileHomeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.recents.size, state.favorites.size) { viewModel.verifyVisibleRows() }
 
@@ -99,6 +102,7 @@ fun MobileHomeScreen(
         if (state.isEmpty) {
             EmptyCatalog(
                 isSyncing = isSyncing,
+                isOnline = isOnline,
                 onRetry = viewModel::retrySync,
                 modifier = Modifier.padding(padding),
             )
@@ -186,7 +190,12 @@ private fun SectionTitle(text: String) {
 }
 
 @Composable
-private fun EmptyCatalog(isSyncing: Boolean, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+private fun EmptyCatalog(
+    isSyncing: Boolean,
+    isOnline: Boolean,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
         if (isSyncing) {
             CircularProgressIndicator()
@@ -196,8 +205,18 @@ private fun EmptyCatalog(isSyncing: Boolean, onRetry: () -> Unit, modifier: Modi
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                if (!isOnline) {
+                    Icon(
+                        imageVector = WifiOffIcon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(40.dp),
+                    )
+                }
                 Text(
-                    text = stringResource(R.string.home_catalog_missing),
+                    text = stringResource(
+                        if (isOnline) R.string.home_catalog_missing else R.string.home_offline,
+                    ),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

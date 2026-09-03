@@ -5,7 +5,10 @@
     <string name="favorites_check">Favorileri kontrol et</string>
     <!-- The TV copy names the long press, which is the only way to add a favourite
          with a remote. On a phone the card carries a visible action too. -->
-    <string name="favorites_empty_touch">Henüz favori kanalınız yok.\nBir kanalı favorilere eklemek için karta uzun basın.</string>
+    <string name="favorites_empty_touch">Henüz favoriniz yok.\nKanal kartına veya radyo istasyonuna uzun basarak ekleyebilirsiniz.</string>
     <string name="favorites_removed">Favorilerden çıkarıldı</string>
     <string name="favorites_undo">Geri al</string>
+    <!-- Section headers inside the favourites tab. -->
+    <string name="favorites_channels">Kanallar</string>
+    <string name="favorites_radio">Radyo</string>
 </resources>

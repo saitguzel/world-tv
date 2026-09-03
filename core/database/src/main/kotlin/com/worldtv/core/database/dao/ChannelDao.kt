@@ -150,6 +150,7 @@ interface ChannelDao {
           AND c.id NOT IN (SELECT channelId FROM blocklist)
           AND (:showNsfw OR c.isNsfw = 0)
           AND s.state != 'DEAD'
+          AND (:country IS NULL OR c.country = :country)
           AND c.searchText LIKE '%' || :normalizedQuery || '%'
         GROUP BY c.id
         ORDER BY (c.searchText LIKE :normalizedQuery || '%') DESC,
@@ -158,7 +159,55 @@ interface ChannelDao {
         LIMIT :limit
         """,
     )
-    fun search(normalizedQuery: String, showNsfw: Boolean, limit: Int): Flow<List<ChannelWithHealth>>
+    fun search(
+        normalizedQuery: String,
+        showNsfw: Boolean,
+        country: String?,
+        limit: Int,
+    ): Flow<List<ChannelWithHealth>>
+
+    /**
+     * One live channel at random, honouring the same filters as [channels].
+     *
+     * The random button plays a channel the user could have reached by scrolling — no
+     * special-casing, or it would surface dead weight the grid hides.
+     */
+    @Transaction
+    @Query(
+        """
+        SELECT c.id, c.name, c.country, c.categories, c.logoUrl, c.isNsfw, c.isClosed,
+               c.replacedBy,
+               COUNT(s.id) AS availableStreams,
+               SUM(CASE WHEN s.state = 'OK' THEN 1 ELSE 0 END) AS verifiedStreams,
+               SUM(CASE WHEN s.state = 'GEO_BLOCKED' THEN 1 ELSE 0 END) AS geoBlockedStreams,
+               MIN(NULLIF(s.lastLatencyMs, 0)) AS bestLatencyMs,
+               (f.id IS NOT NULL) AS isFavorite
+        FROM channels c
+        JOIN streams s ON s.channelId = c.id
+        LEFT JOIN favorites f ON f.id = c.id AND f.kind = 'channel'
+        WHERE c.isClosed = 0
+          AND c.id NOT IN (SELECT channelId FROM blocklist)
+          AND (:showNsfw OR c.isNsfw = 0)
+          AND s.state != 'DEAD'
+          AND (:showGeoBlocked OR s.state != 'GEO_BLOCKED')
+          AND (:showUnchecked OR s.state != 'UNKNOWN')
+          AND (:country IS NULL OR c.country = :country)
+          AND (:category IS NULL OR (',' || c.categories || ',') LIKE '%,' || :category || ',%')
+        GROUP BY c.id
+        ORDER BY RANDOM()
+        LIMIT 1
+        """,
+    )
+    suspend fun randomChannel(
+        country: String?,
+        category: String?,
+        showNsfw: Boolean,
+        showGeoBlocked: Boolean,
+        showUnchecked: Boolean,
+    ): ChannelWithHealth?
+
+    @Query("SELECT COUNT(*) FROM channels")
+    fun channelCountFlow(): Flow<Int>
 
     /**
      * Summaries for a specific set of channels, used by the player's channel drawer.

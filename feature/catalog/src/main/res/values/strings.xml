@@ -12,6 +12,7 @@
     <string name="home_catalog_missing">Katalog henüz indirilmedi.</string>
     <string name="home_catalog_downloading">Katalog ilk kez indiriliyor…</string>
     <string name="home_download_now">Şimdi indir</string>
+    <string name="home_offline">İnternet bağlantısı yok. Bağlantı kurulduğunda katalog otomatik indirilir.</string>
     <string name="home_exit_confirm">Çıkmak için tekrar geri tuşuna basın</string>
     <!-- flag, name, live channel count -->
     <string name="country_with_count">%1$s %2$s · %3$d</string>
@@ -21,12 +22,17 @@
     <string name="browse_retry">Yeniden dene</string>
     <string name="browse_countries">Ülkeler</string>
     <string name="browse_categories">Kategoriler</string>
+    <string name="browse_random">Rastgele</string>
 
     <!-- The on-screen placeholder. :app owns search_hint, which searchable.xml reads. -->
-    <string name="search_placeholder">Kanal ara</string>
+    <string name="search_placeholder">Kanal veya radyo ara</string>
     <string name="search_voice">Sesle ara</string>
     <string name="search_no_results">Sonuç yok</string>
     <string name="search_start">Aramaya başlayın</string>
+    <string name="search_kind_tv">TV</string>
+    <string name="search_kind_radio">Radyo</string>
+    <string name="search_country_filter">Ülke filtresi</string>
+    <string name="search_all_countries">Tüm ülkeler</string>
     <string name="search_recent">Son aramalar</string>
     <string name="search_popular">Sık izlenenler</string>
     <string name="keyboard_space">Boşluk</string>

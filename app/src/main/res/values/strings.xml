@@ -7,7 +7,7 @@
     -->
     <string name="app_name">WorldTV</string>
     <!-- Referenced by searchable.xml for the Assistant / global-search hint. -->
-    <string name="search_hint">Kanal ara</string>
+    <string name="search_hint">Kanal veya radyo ara</string>
 
 
     <!-- Phone navigation bar labels. Kept in :app because only the shell renders them. -->

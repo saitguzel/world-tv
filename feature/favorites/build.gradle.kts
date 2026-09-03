@@ -15,6 +15,9 @@ dependencies {
     implementation(projects.core.designsystemTv)
     implementation(projects.core.designsystemMobile)
     implementation(projects.data.repository)
+    // The favourites tab lists favourite radio stations next to channels and starts
+    // them through the same singleton controller the radio screen uses.
+    implementation(projects.feature.radio)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)

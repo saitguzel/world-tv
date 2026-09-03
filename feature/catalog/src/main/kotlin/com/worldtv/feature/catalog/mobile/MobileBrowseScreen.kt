@@ -48,6 +48,7 @@ import com.worldtv.feature.catalog.CatalogViewModel
 import com.worldtv.feature.catalog.R
 import com.worldtv.feature.catalog.TrackVisibleChannels
 import kotlinx.coroutines.launch
+import com.worldtv.core.designsystem.component.ShuffleIcon
 
 /**
  * Browsing the catalog, for touch.
@@ -90,8 +91,8 @@ fun MobileBrowseScreen(
     val gridState = rememberLazyGridState()
     val sheetState = rememberModalBottomSheetState()
     var sheetOpen by remember { mutableStateOf(false) }
-    val snackbarHost = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val snackbarHost = remember { SnackbarHostState() }
     val haptics = LocalHapticFeedback.current
     val addedLabel = stringResource(R.string.browse_favorite_added)
     val removedLabel = stringResource(R.string.browse_favorite_removed)
@@ -118,6 +119,16 @@ fun MobileBrowseScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.browse_all_channels)) },
                 actions = {
+                    IconButton(onClick = {
+                        scope.launch {
+                            viewModel.openRandomChannel(
+                                loadedIds = (0 until channels.itemCount)
+                                    .mapNotNull { channels.peek(it)?.channel?.id },
+                            )?.let(onChannelSelected)
+                        }
+                    }) {
+                        Icon(ShuffleIcon, contentDescription = stringResource(R.string.browse_random))
+                    }
                     IconButton(onClick = { sheetOpen = true }) {
                         Icon(
                             Icons.Filled.MoreVert,

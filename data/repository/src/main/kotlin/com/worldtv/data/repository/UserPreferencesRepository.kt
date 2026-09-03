@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.worldtv.core.common.DeviceCountry
 import com.worldtv.data.health.HealthCheckConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -42,7 +43,9 @@ enum class HealthAggressiveness {
     }
 }
 
-/** Where a fresh install starts. Changeable from settings. */
+/**
+ * Where a fresh install starts when even the device's own region cannot be read.
+ */
 const val DEFAULT_HOME_COUNTRY = "TR"
 
 data class UserPreferences(
@@ -67,13 +70,24 @@ data class UserPreferences(
 @Singleton
 class UserPreferencesRepository @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val deviceCountry: DeviceCountry,
 ) {
+
+    /**
+     * The home country when the user has never chosen one: the device's own region
+     * first, then [DEFAULT_HOME_COUNTRY]. Reading the stored value is deliberately
+     * checked first so a choice the user made in settings is never overridden by
+     * detection.
+     */
+    private val detectedDefault: String
+        get() = deviceCountry.currentCountryCode() ?: DEFAULT_HOME_COUNTRY
+
     val preferences: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
         UserPreferences(
             showNsfw = prefs[SHOW_NSFW] ?: false,
             showUnchecked = prefs[SHOW_UNCHECKED] ?: true,
             showGeoBlocked = prefs[SHOW_GEO_BLOCKED] ?: true,
-            homeCountry = prefs[HOME_COUNTRY] ?: DEFAULT_HOME_COUNTRY,
+            homeCountry = prefs[HOME_COUNTRY] ?: detectedDefault,
             lastMode = prefs[LAST_MODE] ?: "TV",
             healthAggressiveness = prefs[HEALTH_AGGRESSIVENESS]
                 ?.let { runCatching { HealthAggressiveness.valueOf(it) }.getOrNull() }

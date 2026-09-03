@@ -78,14 +78,19 @@ fun HomeScreen(
 
     if (state.isEmpty) {
         val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
+        val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
         if (isSyncing) {
             LoadingState(message = stringResource(R.string.home_catalog_downloading),
                 modifier = modifier,)
         } else {
             // A failed first sync must leave something focusable on screen, or the
-            // remote does nothing and the app looks broken rather than empty.
+            // remote does nothing and the app looks broken rather than empty. The
+            // offline copy explains *why* the download never lands instead of pointing
+            // at an app that looks stuck.
             EmptyState(
-                message = stringResource(R.string.home_catalog_missing),
+                message = stringResource(
+                    if (isOnline) R.string.home_catalog_missing else R.string.home_offline,
+                ),
                 actionLabel = stringResource(R.string.home_download_now),
                 onAction = viewModel::retrySync,
                 modifier = modifier,

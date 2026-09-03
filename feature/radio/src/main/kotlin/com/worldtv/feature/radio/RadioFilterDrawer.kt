@@ -1,4 +1,4 @@
-package com.worldtv.feature.catalog
+package com.worldtv.feature.radio
 
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -27,62 +27,56 @@ import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.core.model.Category
 import com.worldtv.core.model.Country
 import androidx.compose.ui.res.stringResource
-import com.worldtv.feature.catalog.R
+import com.worldtv.feature.radio.R
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.FilterChip
 import androidx.tv.material3.Icon
 import com.worldtv.core.designsystem.component.ShuffleIcon
 
-/** Which facet the drawer is currently listing. */
-enum class BrowseFacet { COUNTRY, CATEGORY }
+/** Which facet the radio filter drawer is currently listing. */
+enum class RadioFacet { COUNTRY, CATEGORY }
 
 /**
- * The persistent browse drawer.
+ * Country and category filter for radio.
  *
- * Country and category share one list with a switch at the top rather than living on
- * separate screens: navigation depth is capped at three, and a facet switch costs one
- * press where a screen change costs a navigation plus a BACK to undo.
- *
- * `focusRestorer()` here as well as on the grid: moving right into the grid and back
- * left must land on the entry the user came from, not the top of the list.
+ * Same shape as the TV browse drawer on purpose: the two modes should not need to be
+ * learned separately, and `focusRestorer()` is what makes moving right into the list
+ * and back left return to the entry the user came from. Country and category share one
+ * list with a facet switch at the top, exactly like the channel drawer — a facet
+ * switch costs one press where a screen change costs a navigation plus a BACK.
  */
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun CountryDrawer(
+fun RadioFilterDrawer(
     countries: List<Country>,
     categories: List<Category>,
     selectedCountry: String?,
     selectedCategory: String?,
-    onCountrySelected: (String) -> Unit,
-    onCategorySelected: (String) -> Unit,
-    onRandom: () -> Unit = {},
+    onCountrySelected: (String?) -> Unit,
+    onCategorySelected: (String?) -> Unit,
+    onRandom: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var facet by remember { mutableStateOf(BrowseFacet.COUNTRY) }
+    var facet by remember { mutableStateOf(RadioFacet.COUNTRY) }
     Column(
         modifier
             .width(WorldTvDimens.DrawerWidthExpanded)
             .fillMaxHeight()
-            .padding(
-                start = WorldTvDimens.ScreenPadding,
-                top = WorldTvDimens.ScreenPadding,
-                bottom = WorldTvDimens.ScreenPadding,
-                end = 8.dp,
-            ),
+            .padding(end = 16.dp),
     ) {
         Row(
             Modifier.padding(bottom = 12.dp).focusGroup(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             FilterChip(
-                selected = facet == BrowseFacet.COUNTRY,
-                onClick = { facet = BrowseFacet.COUNTRY },
-                content = { Text(stringResource(R.string.browse_countries)) },
+                selected = facet == RadioFacet.COUNTRY,
+                onClick = { facet = RadioFacet.COUNTRY },
+                content = { Text(stringResource(R.string.radio_countries)) },
             )
             FilterChip(
-                selected = facet == BrowseFacet.CATEGORY,
-                onClick = { facet = BrowseFacet.CATEGORY },
-                content = { Text(stringResource(R.string.browse_categories)) },
+                selected = facet == RadioFacet.CATEGORY,
+                onClick = { facet = RadioFacet.CATEGORY },
+                content = { Text(stringResource(R.string.radio_categories)) },
             )
         }
 
@@ -92,35 +86,52 @@ fun CountryDrawer(
                 .focusRestorer()
                 .focusGroup(),
         ) {
+            item {
+                ListItem(
+                    selected = when (facet) {
+                        RadioFacet.COUNTRY -> selectedCountry == null
+                        RadioFacet.CATEGORY -> selectedCategory == null
+                    },
+                    onClick = {
+                        when (facet) {
+                            RadioFacet.COUNTRY -> onCountrySelected(null)
+                            RadioFacet.CATEGORY -> onCategorySelected(null)
+                        }
+                    },
+                    headlineContent = { Text(stringResource(R.string.radio_all)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
             when (facet) {
-                BrowseFacet.COUNTRY -> items(countries, key = { it.code }) { country ->
+                RadioFacet.COUNTRY -> items(countries, key = { it.code }) { country ->
                     ListItem(
                         selected = country.code == selectedCountry,
                         onClick = { onCountrySelected(country.code) },
                         headlineContent = {
                             Text(
-                                text = "${country.flag} ${country.name}",
+                                text = listOf(country.flag, country.name)
+                                    .filter { it.isNotBlank() }
+                                    .joinToString(" "),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                            )
-                        },
-                        trailingContent = {
-                            Text(
-                                text = country.channelCount.toString(),
-                                color = WorldTvColors.OnSurfaceMuted,
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
 
-                BrowseFacet.CATEGORY -> items(categories, key = { it.id }) { category ->
+                RadioFacet.CATEGORY -> items(categories, key = { it.id }) { category ->
                     ListItem(
                         selected = category.id == selectedCategory,
                         onClick = { onCategorySelected(category.id) },
                         headlineContent = {
                             Text(
-                                text = category.name,
+                                text = stringResource(
+                                    R.string.category_with_count,
+                                    category.name,
+                                    category.channelCount,
+                                ),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -136,7 +147,7 @@ fun CountryDrawer(
                     onClick = onRandom,
                     headlineContent = {
                         Text(
-                            text = stringResource(R.string.browse_random),
+                            text = stringResource(R.string.radio_random),
                             color = WorldTvColors.Accent,
                         )
                     },

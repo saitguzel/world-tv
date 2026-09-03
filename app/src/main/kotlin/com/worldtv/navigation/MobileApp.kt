@@ -37,6 +37,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.worldtv.R
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.worldtv.core.designsystem.component.RadioIcon
 
 /**
  * The phone shell: a navigation bar wrapped around [MobileNavHost].
@@ -149,6 +150,6 @@ private val NAV_ITEMS = listOf(
     NavItem(Routes.HOME, R.string.tab_home, Icons.Filled.Home),
     NavItem(Routes.BROWSE_BASE, R.string.tab_browse, Icons.AutoMirrored.Filled.List),
     NavItem(Routes.SEARCH, R.string.tab_search, Icons.Filled.Search),
-    NavItem(Routes.RADIO, R.string.tab_radio, Icons.Filled.PlayArrow),
+    NavItem(Routes.RADIO_BASE, R.string.tab_radio, RadioIcon),
     NavItem(Routes.FAVORITES, R.string.tab_favorites, Icons.Filled.Favorite),
 )

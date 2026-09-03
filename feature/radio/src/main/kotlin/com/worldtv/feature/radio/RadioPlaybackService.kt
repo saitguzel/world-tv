@@ -50,11 +50,18 @@ class RadioPlaybackService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
         mediaSession
 
+    /**
+     * Closing the app stops the radio.
+     *
+     * The default MediaSessionService behaviour keeps playing so the notification
+     * survives a swipe-away — fine for a music app, wrong here: the user explicitly
+     * asked for the app to be gone. Swiping the task away (or the activity finishing
+     * for real) stops playback and the service with it, so nothing keeps running in
+     * the background.
+     */
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val player = mediaSession?.player
-        if (player?.playWhenReady != true) {
-            stopSelf()
-        }
+        mediaSession?.player?.stop()
+        stopSelf()
     }
 
     override fun onDestroy() {

@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -24,6 +25,7 @@ import com.worldtv.core.designsystem.tv.component.LoadingState
 import com.worldtv.core.designsystem.tv.component.TvChannelGrid
 import com.worldtv.core.designsystem.component.toCardState
 import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.launch
 import com.worldtv.feature.catalog.R
 
 /**
@@ -55,6 +57,7 @@ fun BrowseScreen(
     )
     LaunchedEffect(previewTarget) { viewModel.onPreviewTargetChanged(previewTarget) }
     val gridState = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
 
     // Arriving from a country tile on Home preselects that country.
     LaunchedEffect(initialCountry) {
@@ -91,6 +94,14 @@ fun BrowseScreen(
                     viewModel.rememberHomeCountry(code)
                 },
                 onCategorySelected = viewModel::setCategory,
+                onRandom = {
+                    scope.launch {
+                        viewModel.openRandomChannel(
+                            loadedIds = (0 until channels.itemCount)
+                                .mapNotNull { channels.peek(it)?.channel?.id },
+                        )?.let(onChannelSelected)
+                    }
+                },
             )
 
             val isInitialLoad =

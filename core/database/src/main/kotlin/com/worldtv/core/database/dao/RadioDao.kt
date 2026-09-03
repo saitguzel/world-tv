@@ -8,6 +8,12 @@ import androidx.room.Query
 import com.worldtv.core.database.entity.RadioStationEntity
 import kotlinx.coroutines.flow.Flow
 
+/** One distinct `tags` cell plus how many stations carry it. */
+data class RadioTagRow(
+    val tags: String,
+    val stationCount: Int,
+)
+
 @Dao
 interface RadioDao {
 
@@ -40,12 +46,14 @@ interface RadioDao {
     @Query(
         """
         SELECT * FROM radio_stations
-        WHERE state != 'DEAD' AND searchText LIKE '%' || :normalizedQuery || '%'
+        WHERE state != 'DEAD'
+          AND (:country IS NULL OR countryCode = :country)
+          AND searchText LIKE '%' || :normalizedQuery || '%'
         ORDER BY (searchText LIKE :normalizedQuery || '%') DESC, clickCount DESC
         LIMIT :limit
         """,
     )
-    fun search(normalizedQuery: String, limit: Int): Flow<List<RadioStationEntity>>
+    fun search(normalizedQuery: String, country: String?, limit: Int): Flow<List<RadioStationEntity>>
 
     @Query("SELECT * FROM radio_stations WHERE uuid = :uuid")
     suspend fun byId(uuid: String): RadioStationEntity?
@@ -133,6 +141,38 @@ interface RadioDao {
 
     @Query("SELECT DISTINCT countryCode FROM radio_stations ORDER BY countryCode")
     fun availableCountries(): Flow<List<String>>
+
+    /**
+     * Every distinct tag string with the station count behind it.
+     *
+     * A station carries a comma-separated tag list in one column, so the categories
+     * have to be split and counted in Kotlin — [RadioDao] stays a dumb table gateway
+     * and the aggregation rule lives next to the repository where it is testable.
+     *
+     * A one-shot read, not a Flow: Room would re-run this GROUP BY over the whole table
+     * on every health-probe write, and the repository decides when it is worth
+     * repeating instead.
+     */
+    @Query(
+        """
+        SELECT tags, COUNT(*) AS stationCount
+        FROM radio_stations WHERE state != 'DEAD'
+        GROUP BY tags
+        """,
+    )
+    suspend fun tagsByStation(): List<RadioTagRow>
+
+    @Query(
+        """
+        SELECT * FROM radio_stations
+        WHERE state != 'DEAD'
+          AND (:country IS NULL OR countryCode = :country)
+          AND (:tag IS NULL OR (',' || tags || ',') LIKE '%,' || :tag || ',%')
+        ORDER BY RANDOM()
+        LIMIT 1
+        """,
+    )
+    suspend fun randomStation(country: String?, tag: String?): RadioStationEntity?
 
     @Query("SELECT COUNT(*) FROM radio_stations")
     suspend fun count(): Int

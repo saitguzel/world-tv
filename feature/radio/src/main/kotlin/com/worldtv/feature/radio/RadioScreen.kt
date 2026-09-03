@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import androidx.tv.material3.Button
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -31,6 +32,13 @@ import com.worldtv.core.model.RadioStation
 import com.worldtv.core.model.StreamState
 import androidx.compose.ui.res.stringResource
 import com.worldtv.feature.radio.R
+import com.worldtv.core.model.badge
+import com.worldtv.core.model.describe
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.tv.material3.Icon
+import com.worldtv.core.designsystem.component.ShuffleIcon
 
 @Composable
 fun RadioScreen(
@@ -40,8 +48,10 @@ fun RadioScreen(
     val stations = viewModel.stations.collectAsLazyPagingItems()
     val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val countries by viewModel.availableCountries.collectAsStateWithLifecycle()
+    val categories by viewModel.availableCategories.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
     val selectedCountry by viewModel.country.collectAsStateWithLifecycle()
+    val selectedCategory by viewModel.category.collectAsStateWithLifecycle()
 
     if (stations.itemCount == 0 && countries.isEmpty()) {
         LoadingState(message = stringResource(R.string.radio_loading), modifier = modifier)
@@ -49,20 +59,31 @@ fun RadioScreen(
     }
 
     Row(modifier.fillMaxSize().padding(WorldTvDimens.ScreenPadding)) {
-        RadioCountryDrawer(
+        RadioFilterDrawer(
             countries = countries,
+            categories = categories,
             selectedCountry = selectedCountry,
+            selectedCategory = selectedCategory,
             onCountrySelected = viewModel::setCountry,
+            onCategorySelected = viewModel::setCategory,
+            onRandom = viewModel::playRandom,
         )
 
         Column(Modifier.weight(1f)) {
-        Text(
-            text = nowPlaying?.let { stringResource(R.string.radio_now_playing, it.name) }
-                ?: stringResource(R.string.radio_title),
-            style = MaterialTheme.typography.headlineLarge,
-            color = WorldTvColors.OnSurface,
-            modifier = Modifier.padding(bottom = 16.dp),
-        )
+        Row(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+            Text(
+                text = nowPlaying?.let { stringResource(R.string.radio_now_playing, it.name) }
+                    ?: stringResource(R.string.radio_title),
+                style = MaterialTheme.typography.headlineLarge,
+                color = WorldTvColors.OnSurface,
+                modifier = Modifier.weight(1f),
+            )
+            Button(onClick = viewModel::playRandom) {
+                Icon(ShuffleIcon, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.radio_random))
+            }
+        }
 
         LazyColumn(
             Modifier

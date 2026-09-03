@@ -44,7 +44,7 @@ fun WorldTvNavHost(
                 onChannelSelected = toPlayer,
                 onBrowse = { navController.navigate(Routes.browse()) },
                 onSearch = { navController.navigate(Routes.SEARCH) },
-                onRadio = { navController.navigate(Routes.RADIO) },
+                onRadio = { navController.navigate(Routes.radio()) },
                 onFavorites = { navController.navigate(Routes.FAVORITES) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
                 onCountrySelected = { code -> navController.navigate(Routes.browse(code)) },
@@ -70,11 +70,23 @@ fun WorldTvNavHost(
         composable(Routes.SEARCH) {
             SearchScreen(
                 onChannelSelected = toPlayer,
+                onRadioSelected = { station -> navController.navigate(Routes.radio(station)) },
                 initialQuery = pendingVoiceQuery,
             )
         }
 
-        composable(Routes.RADIO) {
+        composable(
+            route = Routes.RADIO,
+            arguments = listOf(
+                navArgument("station") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) {
+            // The optional station argument reaches RadioViewModel through its
+            // SavedStateHandle, which is also what lets it be consumed exactly once.
             RadioScreen()
         }
 

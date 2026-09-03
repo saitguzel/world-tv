@@ -28,6 +28,29 @@ class RoutesTest {
     }
 
     @Test
+    fun `radio without a station omits the argument entirely`() {
+        // Same rule as browse: the argument is nullable with a null default, and the
+        // literal "null" string would defeat that.
+        assertEquals("radio", Routes.radio())
+        assertEquals("radio", Routes.radio(null))
+    }
+
+    @Test
+    fun `radio with a station carries it`() {
+        assertEquals("radio?station=trt-fm-1", Routes.radio("trt-fm-1"))
+    }
+
+    @Test
+    fun `the radio tab stays selected once a station is chosen`() {
+        // A search result lands on "radio?station=trt-fm-1"; the nav bar only knows
+        // "radio", and the startswith match is what keeps the tab highlighted.
+        assertTrue(Routes.isTopLevel("radio", Routes.RADIO_BASE))
+        assertTrue(Routes.isTopLevel("radio?station=trt-fm-1", Routes.RADIO_BASE))
+        assertTrue(Routes.isTopLevel("radio?station={station}", Routes.RADIO_BASE))
+        assertFalse(Routes.isTopLevel("radios", Routes.RADIO_BASE))
+    }
+
+    @Test
     fun `the player route embeds the channel id`() {
         assertEquals("player/trt1", Routes.player("trt1"))
         assertTrue(Routes.isPlayer(Routes.player("trt1")))
@@ -63,7 +86,7 @@ class RoutesTest {
         // TOP_LEVEL is hand-written; this stops it drifting from the graph.
         val declared = setOf(
             Routes.HOME, Routes.BROWSE_BASE, Routes.SEARCH,
-            Routes.RADIO, Routes.FAVORITES, Routes.SETTINGS,
+            Routes.RADIO_BASE, Routes.FAVORITES, Routes.SETTINGS,
         )
         assertTrue(declared.containsAll(Routes.TOP_LEVEL))
     }

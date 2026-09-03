@@ -77,10 +77,24 @@ fun MobileNavHost(
         composable(Routes.SEARCH) {
             MobileSearchScreen(
                 onChannelSelected = { navController.navigate(Routes.player(it)) },
+                onRadioSelected = { station -> navController.navigate(Routes.radio(station)) },
                 initialQuery = pendingVoiceQuery,
             )
         }
-        composable(Routes.RADIO) { MobileRadioScreen() }
+        composable(
+            route = Routes.RADIO,
+            arguments = listOf(
+                navArgument("station") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) {
+            // The optional station argument reaches RadioViewModel through its
+            // SavedStateHandle, which is also what lets it be consumed exactly once.
+            MobileRadioScreen()
+        }
         composable(Routes.FAVORITES) {
             MobileFavoritesScreen(
                 onChannelSelected = { navController.navigate(Routes.player(it)) },

@@ -3,10 +3,13 @@ package com.worldtv.feature.favorites
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.worldtv.core.model.ChannelSummary
+import com.worldtv.core.model.RadioStation
 import com.worldtv.data.repository.ChannelRepository
 import com.worldtv.data.repository.FavoritesRepository
 import com.worldtv.data.repository.HealthRepository
 import com.worldtv.data.repository.PlaybackQueueHolder
+import com.worldtv.data.repository.RadioRepository
+import com.worldtv.feature.radio.RadioController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,9 +23,15 @@ class FavoritesViewModel @Inject constructor(
     private val favoritesRepository: FavoritesRepository,
     private val healthRepository: HealthRepository,
     private val playbackQueue: PlaybackQueueHolder,
+    private val radioRepository: RadioRepository,
+    private val radioController: RadioController,
 ) : ViewModel() {
 
     val favorites: StateFlow<List<ChannelSummary>> = channelRepository.favorites()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Radio favourites, newest first — shown below the channel grid on a phone. */
+    val radioFavorites: StateFlow<List<RadioStation>> = radioRepository.favorites()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val recents: StateFlow<List<ChannelSummary>> = channelRepository.recents()
@@ -35,6 +44,24 @@ class FavoritesViewModel @Inject constructor(
                 FavoritesRepository.Kind.CHANNEL,
                 currentlyFavorite,
             )
+        }
+    }
+
+    fun toggleRadioFavorite(uuid: String, currentlyFavorite: Boolean) {
+        viewModelScope.launch {
+            favoritesRepository.toggle(
+                uuid,
+                FavoritesRepository.Kind.RADIO,
+                currentlyFavorite,
+            )
+        }
+    }
+
+    /** Plays a favourite radio right from this tab; the session outlives the screen. */
+    fun playRadio(station: RadioStation) {
+        radioController.play(station)
+        viewModelScope.launch {
+            favoritesRepository.recordWatch(station.uuid, FavoritesRepository.Kind.RADIO)
         }
     }
 
