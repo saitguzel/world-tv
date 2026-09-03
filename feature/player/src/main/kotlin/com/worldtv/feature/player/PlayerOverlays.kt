@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,12 +27,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.size.Size
 import com.worldtv.core.designsystem.component.NowNextBlock
+import com.worldtv.core.designsystem.component.ShuffleIcon
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.model.NowNext
 import androidx.compose.ui.res.stringResource
@@ -124,6 +129,7 @@ fun PlayerControls(
     state: PlayerUiState,
     onToggleFavorite: () -> Unit,
     onOpenChannelList: () -> Unit,
+    onRandom: () -> Unit = {},
     onOpenTracks: () -> Unit = {},
     hasTrackChoices: Boolean = false,
     modifier: Modifier = Modifier,
@@ -156,6 +162,11 @@ fun PlayerControls(
         }
         Button(onClick = onOpenChannelList) {
             Text(stringResource(R.string.player_channel_list))
+        }
+        Button(onClick = onRandom) {
+            Icon(ShuffleIcon, contentDescription = null, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.player_random))
         }
         // Hidden entirely when the stream carries nothing to choose between, rather
         // than shown disabled — a dead button still costs a D-pad press to skip.

@@ -1,11 +1,15 @@
 package com.worldtv.feature.radio.mobile
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.worldtv.core.model.RadioStation
+import com.worldtv.data.repository.FavoritesRepository
+import com.worldtv.data.repository.RadioRepository
 import com.worldtv.feature.radio.RadioController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * Backs the now-playing bar that sits above the navigation host.
@@ -22,6 +26,8 @@ import kotlinx.coroutines.flow.StateFlow
 @HiltViewModel
 class MiniPlayerViewModel @Inject constructor(
     private val controller: RadioController,
+    private val radioRepository: RadioRepository,
+    private val favoritesRepository: FavoritesRepository,
 ) : ViewModel() {
 
     val nowPlaying: StateFlow<RadioStation?> = controller.nowPlaying
@@ -33,6 +39,21 @@ class MiniPlayerViewModel @Inject constructor(
         // the bar's view model, constructed on every phone start, so binding here does
         // not start a service at process launch the way doing it in Application would.
         controller.connect()
+    }
+
+    /**
+     * Another station, from wherever the bar happens to be.
+     *
+     * Unfiltered, unlike the radio screen's own shuffle: the bar is shown on every tab
+     * and has no filter of its own to honour, and a station chosen from the whole table
+     * is the point of pressing shuffle from somewhere that is not the radio list.
+     */
+    fun playRandom() {
+        viewModelScope.launch {
+            val station = radioRepository.randomStation(country = null, tag = null) ?: return@launch
+            controller.play(station)
+            favoritesRepository.recordWatch(station.uuid, FavoritesRepository.Kind.RADIO)
+        }
     }
 
     fun togglePlayPause() = controller.togglePlayPause()

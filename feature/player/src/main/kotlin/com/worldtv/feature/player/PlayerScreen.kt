@@ -191,6 +191,7 @@ fun PlayerScreen(
                 state = state,
                 onToggleFavorite = viewModel::toggleFavorite,
                 onOpenChannelList = viewModel::openChannelDrawer,
+                onRandom = viewModel::playRandom,
                 onOpenTracks = viewModel::openTrackPicker,
                 hasTrackChoices = state.subtitleTracks.isNotEmpty() ||
                     state.audioTracks.size > 1,

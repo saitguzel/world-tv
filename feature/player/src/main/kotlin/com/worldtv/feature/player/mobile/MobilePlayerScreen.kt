@@ -74,6 +74,7 @@ import com.worldtv.core.model.MediaTrack
 import com.worldtv.core.designsystem.mobile.component.FullscreenExitIcon
 import com.worldtv.core.designsystem.mobile.component.FullscreenIcon
 import com.worldtv.core.designsystem.component.PauseIcon
+import com.worldtv.core.designsystem.component.ShuffleIcon
 import com.worldtv.feature.player.PlayerLifecycleEffect
 import com.worldtv.core.model.HealthBadge
 import com.worldtv.feature.player.PlayerGesture
@@ -272,6 +273,7 @@ fun MobilePlayerScreen(
                 onPlayPause = viewModel::togglePlayPause,
                 onFavorite = viewModel::toggleFavorite,
                 onChannels = viewModel::openChannelDrawer,
+                onRandom = viewModel::playRandom,
                 onTracks = viewModel::openTrackPicker,
                 isFullscreen = fullscreen,
                 onFullscreen = { fullscreen = !fullscreen },
@@ -332,6 +334,7 @@ private fun Hud(
     onPlayPause: () -> Unit,
     onFavorite: () -> Unit,
     onChannels: () -> Unit,
+    onRandom: () -> Unit,
     onTracks: () -> Unit,
     isFullscreen: Boolean,
     onFullscreen: () -> Unit,
@@ -421,6 +424,13 @@ private fun Hud(
                 Icon(
                     Icons.AutoMirrored.Filled.List,
                     contentDescription = stringResource(R.string.player_channel_list),
+                    tint = Color.White,
+                )
+            }
+            IconButton(onClick = onRandom) {
+                Icon(
+                    ShuffleIcon,
+                    contentDescription = stringResource(R.string.player_random),
                     tint = Color.White,
                 )
             }

@@ -10,9 +10,12 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import com.worldtv.core.designsystem.component.PauseIcon
+import com.worldtv.core.designsystem.component.ShuffleIcon
 import com.worldtv.core.designsystem.component.TvIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -110,6 +113,13 @@ private fun MiniPlayer(
                     Text(current.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 },
                 trailingContent = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = viewModel::playRandom) {
+                        Icon(
+                            imageVector = ShuffleIcon,
+                            contentDescription = stringResource(R.string.mini_player_random),
+                        )
+                    }
                     IconButton(onClick = viewModel::togglePlayPause) {
                         Icon(
                             imageVector = if (isPlaying) PauseIcon else Icons.Filled.PlayArrow,
@@ -118,6 +128,7 @@ private fun MiniPlayer(
                                 else R.string.mini_player_play,
                             ),
                         )
+                    }
                     }
                 },
             )

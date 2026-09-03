@@ -2,6 +2,7 @@
 <resources>
     <string name="player_channels">Kanallar</string>
     <string name="player_channel_list">Kanal listesi</string>
+    <string name="player_random">Rastgele kanal</string>
     <string name="player_tracks">Altyazı ve ses</string>
     <string name="player_favorite_add">Favorilere ekle</string>
     <string name="player_favorite_remove">Favorilerden çıkar</string>

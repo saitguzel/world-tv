@@ -22,4 +22,5 @@
     <!-- Now-playing bar above the navigation host. -->
     <string name="mini_player_play">Çal</string>
     <string name="mini_player_pause">Duraklat</string>
+    <string name="mini_player_random">Rastgele radyo</string>
 </resources>

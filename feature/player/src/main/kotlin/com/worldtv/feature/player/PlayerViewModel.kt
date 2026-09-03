@@ -252,6 +252,28 @@ class PlayerViewModel @Inject constructor(
         openChannel(next)
     }
 
+    /**
+     * Somewhere else, without leaving the player.
+     *
+     * Picks from the list the user is already zapping through rather than from the whole
+     * catalog: that list is what they chose to browse, and being thrown from a Turkish
+     * news list into a random channel on the other side of the world reads as a bug
+     * rather than as a feature. Only when there is no list to speak of — a deep link, or
+     * a queue holding just this channel — does it fall back to the catalog.
+     */
+    fun playRandom() {
+        val elsewhere = playbackQueue.queue.value.channelIds
+            .filterNot { it == _uiState.value.channel?.id }
+        if (elsewhere.isNotEmpty()) {
+            jumpTo(elsewhere.random())
+            return
+        }
+        viewModelScope.launch {
+            val pick = channelRepository.randomChannel(country = null, category = null) ?: return@launch
+            jumpTo(pick.channel.id)
+        }
+    }
+
     /** Selecting a channel from the side drawer. */
     fun jumpTo(channelId: String) {
         playbackQueue.jumpTo(channelId)
