@@ -67,6 +67,24 @@ class ChannelRepository @Inject constructor(
     fun recents(limit: Int = 20): Flow<List<ChannelSummary>> =
         channelDao.recentChannels(limit).map { rows -> rows.map(ChannelWithHealth::toSummary) }
 
+    /**
+     * The best-looking channels in one country, for a home shelf.
+     *
+     * Honours the same visibility preferences the grid does — a user who has hidden
+     * unchecked or geo-blocked streams must not meet them again on the home screen.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    fun popular(country: String? = null, limit: Int = 12): Flow<List<ChannelSummary>> =
+        preferences.preferences.flatMapLatest { prefs ->
+            channelDao.popularChannels(
+                country = country,
+                showNsfw = prefs.showNsfw,
+                showGeoBlocked = prefs.showGeoBlocked,
+                showUnchecked = prefs.showUnchecked,
+                limit = limit,
+            ).map { rows -> rows.map(ChannelWithHealth::toSummary) }
+        }
+
     fun categories(): Flow<List<Category>> = userDataDao.categories().map { rows ->
         rows.map { Category(id = it.id, name = it.name) }
     }

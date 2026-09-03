@@ -4,90 +4,37 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 /**
- * The resume rule.
+ * What the radio reports about itself, and what a play/pause tap does.
  *
- * This exists because the alternative is checking it by hand on a device, and the
- * distinction it encodes — the system took the radio away versus the user put it down —
- * is invisible from the outside: both look like "paused".
+ * This class used to be about one thing: whether the radio should come back after a
+ * video took audio focus. It no longer comes back at all — see [RadioPlaybackState] —
+ * so what is pinned here is the other half: the state never claims something the
+ * session has not reported, and a tap never takes sound away from a channel.
  */
 class RadioPlaybackStateTest {
 
     @Test
-    fun `the system taking focus leaves the user still wanting radio`() {
-        val state = playing("trt-fm")
-        state.onSessionPaused(PauseCause.FOCUS_LOSS)
+    fun `a station is only playing once the session says so`() {
+        val state = RadioPlaybackState()
+        state.onUserPlay("trt-fm")
 
-        assertEquals(ResumeDecision.RESUME, state.onVideoReleased())
+        // The regression that started all of this: the old controller set isPlaying at
+        // the moment it issued the command, so the bar showed a pause icon over silence.
+        assertEquals("trt-fm", state.current.stationId)
+        assertEquals(false, state.current.playing)
+
+        state.onSessionPlayingChanged(true)
+        assertEquals(true, state.current.playing)
     }
 
     @Test
-    fun `a user pause is not undone by a video ending`() {
-        // The regression that will actually happen: someone pauses the radio, watches a
-        // channel, comes back, and the radio starts talking at them again.
-        val state = playing("trt-fm")
-        state.onUserToggle(videoActive = false)
-
-        assertEquals(ResumeDecision.DO_NOTHING, state.onVideoReleased())
-    }
-
-    @Test
-    fun `stopping clears the station, so nothing resumes`() {
-        val state = playing("trt-fm")
-        state.onUserStop()
-
-        assertEquals(ResumeDecision.DO_NOTHING, state.onVideoReleased())
-    }
-
-    @Test
-    fun `nothing resumes when the radio was never started`() {
-        assertEquals(ResumeDecision.DO_NOTHING, RadioPlaybackState().onVideoReleased())
-    }
-
-    @Test
-    fun `radio still playing is not resumed again`() {
-        val state = playing("trt-fm")
-        assertEquals(ResumeDecision.DO_NOTHING, state.onVideoReleased())
-    }
-
-    @Test
-    fun `a transient duck is left to media3`() {
-        // media3 resumes these itself. Claiming it would make us request focus twice.
-        val state = playing("trt-fm")
-        state.onSessionPaused(PauseCause.TRANSIENT)
-
-        assertEquals(ResumeDecision.RESUME, state.onVideoReleased())
-        // ...but the flag says it was not a focus loss we own.
-        assertEquals(false, state.current.interruptedByFocusLoss)
-    }
-
-    @Test
-    fun `a dead stream does not queue a resume forever`() {
-        val state = playing("trt-fm")
-        state.onSessionPaused(PauseCause.ERROR)
-
-        assertEquals(ResumeDecision.DO_NOTHING, state.onVideoReleased())
-    }
-
-    @Test
-    fun `pressing play while a video holds focus defers instead of killing it`() {
+    fun `a video holding focus makes the play button do nothing at all`() {
         // Taking focus here would silently stop the channel the user is watching, from
         // a bar they are not looking at.
-        val state = RadioPlaybackState()
-        state.onUserPlay("trt-fm")
-        state.onSessionPlayingChanged(true)
-        state.onSessionPaused(PauseCause.FOCUS_LOSS)
+        val state = playing("trt-fm")
+        state.onSessionPlayingChanged(false)
 
-        assertEquals(ToggleAction.DeferUntilVideoEnds, state.onUserToggle(videoActive = true))
-        assertEquals(ResumeDecision.RESUME, state.onVideoReleased())
-    }
-
-    @Test
-    fun `a failed connection drops the intent rather than queueing a resume`() {
-        val state = RadioPlaybackState()
-        state.onUserPlay("trt-fm")
-        state.onConnectFailed()
-
-        assertEquals(ResumeDecision.DO_NOTHING, state.onVideoReleased())
+        assertEquals(ToggleAction.Nothing, state.onUserToggle(videoActive = true))
     }
 
     @Test
@@ -102,7 +49,70 @@ class RadioPlaybackStateTest {
         state.onSessionPlayingChanged(true)
 
         assertEquals(true, state.current.playing)
-        assertEquals(true, state.current.userWantsPlayback)
+    }
+
+    @Test
+    fun `nothing to toggle before a station has been chosen`() {
+        assertEquals(ToggleAction.Nothing, RadioPlaybackState().onUserToggle(videoActive = false))
+    }
+
+    @Test
+    fun `stopping clears the station, so the bar goes away`() {
+        val state = playing("trt-fm")
+        state.onUserStop()
+
+        assertEquals(null, state.current.stationId)
+        assertEquals(false, state.current.playing)
+    }
+
+    @Test
+    fun `a dead stream stops claiming to be connecting`() {
+        val state = playing("trt-fm")
+        state.onSessionBufferingChanged(true)
+        state.onSessionError()
+
+        assertEquals(false, state.current.playing)
+        assertEquals(false, state.current.buffering)
+    }
+
+    @Test
+    fun `a failed connection leaves nothing for the bar to advertise`() {
+        val state = RadioPlaybackState()
+        state.onUserPlay("trt-fm")
+        state.onConnectFailed()
+
+        assertEquals(null, state.current.stationId)
+    }
+
+    @Test
+    fun `a session found already playing is adopted whole`() {
+        // Process death, service still alive: the bar has to appear over sound that is
+        // already coming out of the speakers.
+        val state = RadioPlaybackState()
+        state.onSessionSeeded(stationId = "trt-fm", playing = true, buffering = false)
+
+        assertEquals("trt-fm", state.current.stationId)
+        assertEquals(true, state.current.playing)
+    }
+
+    @Test
+    fun `seeding an empty session does not erase a play still in flight`() {
+        // Connecting is what play() itself does, and the session has no item yet at
+        // that moment; treating that as "nothing is on" would drop the user's request.
+        val state = RadioPlaybackState()
+        state.onUserPlay("trt-fm")
+        state.onSessionSeeded(stationId = null, playing = false, buffering = false)
+
+        assertEquals("trt-fm", state.current.stationId)
+    }
+
+    @Test
+    fun `losing the connection keeps the station but stops claiming it plays`() {
+        val state = playing("trt-fm")
+        state.onDisconnected()
+
+        assertEquals("trt-fm", state.current.stationId)
+        assertEquals(false, state.current.playing)
     }
 
     private fun playing(id: String) = RadioPlaybackState().apply {

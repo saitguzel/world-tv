@@ -11,7 +11,7 @@ package com.worldtv.navigation
  */
 object Routes {
     const val HOME = "home"
-    const val BROWSE = "browse?country={country}"
+    const val BROWSE = "browse?country={country}&category={category}"
     const val SEARCH = "search"
     const val RADIO = "radio?station={station}"
     const val FAVORITES = "favorites"
@@ -27,8 +27,21 @@ object Routes {
     /** Prefix the player uses, so chrome can be hidden without parsing arguments. */
     const val PLAYER_PREFIX = "player/"
 
-    fun browse(country: String? = null): String =
-        if (country == null) BROWSE_BASE else "$BROWSE_BASE?country=$country"
+    /**
+     * The browse destination, with either filter, both, or neither.
+     *
+     * Arguments are appended only when present rather than passed as "null": they are
+     * declared nullable with a null default, and a literal "null" in the URI would be
+     * read as a country called null.
+     */
+    fun browse(country: String? = null, category: String? = null): String = buildString {
+        append(BROWSE_BASE)
+        val args = buildList {
+            country?.let { add("country=$it") }
+            category?.let { add("category=$it") }
+        }
+        if (args.isNotEmpty()) append('?').append(args.joinToString("&"))
+    }
 
     /**
      * The radio destination. A station uuid starts it playing — that is how a search

@@ -27,10 +27,10 @@
 
     <!-- verified stream count, hidden stream count -->
     <string name="settings_health_summary">%1$d yayın doğrulandı, %2$d yayın gizlendi</string>
-    <string name="settings_disclaimer">WorldTV hiçbir içerik barındırmaz veya yayınlamaz. Tüm yayın adresleri herkese açık iptv-org ve Radio Browser dizinlerinden gelir.</string>
+    <string name="settings_disclaimer">Meridyen hiçbir içerik barındırmaz veya yayınlamaz. Tüm yayın adresleri herkese açık iptv-org ve Radio Browser dizinlerinden gelir.</string>
     <!-- Home country seeds the browse filter, the health sweep's first priority
          bucket, and which radio countries are synced. -->
     <string name="settings_home_country">Ana ülke</string>
-    <string name="settings_home_country_hint">Keşfet bu ülkeyle açılır; sağlık kontrolleri ve radyo önce buraya bakar</string>
+    <string name="settings_home_country_hint">TV sekmesi bu ülkeyle açılır; sağlık kontrolleri ve radyo önce buraya bakar</string>
     <string name="settings_home_country_none">Seçilmedi</string>
 </resources>

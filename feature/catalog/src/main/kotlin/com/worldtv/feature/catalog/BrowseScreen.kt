@@ -37,6 +37,7 @@ import com.worldtv.feature.catalog.R
 fun BrowseScreen(
     onChannelSelected: (String) -> Unit,
     initialCountry: String? = null,
+    initialCategory: String? = null,
     modifier: Modifier = Modifier,
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
@@ -59,9 +60,14 @@ fun BrowseScreen(
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
 
-    // Arriving from a country tile on Home preselects that country.
+    // Arriving from a country or category tile on Home preselects that filter. The
+    // two are independent: a category arriving alone must not clear the home country
+    // the view model seeded.
     LaunchedEffect(initialCountry) {
         if (initialCountry != null) viewModel.setCountry(initialCountry)
+    }
+    LaunchedEffect(initialCategory) {
+        if (initialCategory != null) viewModel.setCategory(initialCategory)
     }
 
     // Snapshot the visible ids and hand them to the health engine once scrolling

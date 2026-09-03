@@ -6,9 +6,18 @@
     <string name="action_favorites">Favoriler</string>
     <string name="action_settings">Ayarlar</string>
 
-    <string name="home_continue">Devam et</string>
-    <string name="home_favorites">Favoriler</string>
+    <!-- Home lists channels and stations side by side, so each row says which. -->
+    <string name="home_continue">Son izlenen kanallar</string>
+    <string name="home_favorites">Favori kanallar</string>
+    <string name="home_popular">Popüler kanallar</string>
     <string name="home_countries">Ülkeler</string>
+    <string name="home_categories">Kategoriler</string>
+    <string name="home_radio_recent">Son dinlenen radyolar</string>
+    <string name="home_radio_favorites">Favori radyolar</string>
+    <string name="home_radio_popular">Popüler radyolar</string>
+    <!-- The app's own name, shown as the home title. Kept in step with app_name in
+         :app, which a feature module's R cannot see. -->
+    <string name="home_title">Meridyen</string>
     <string name="home_catalog_missing">Katalog henüz indirilmedi.</string>
     <string name="home_catalog_downloading">Katalog ilk kez indiriliyor…</string>
     <string name="home_download_now">Şimdi indir</string>
@@ -16,6 +25,8 @@
     <string name="home_exit_confirm">Çıkmak için tekrar geri tuşuna basın</string>
     <!-- flag, name, live channel count -->
     <string name="country_with_count">%1$s %2$s · %3$d</string>
+    <!-- category name, channel count -->
+    <string name="category_with_count">%1$s · %2$d</string>
 
     <string name="browse_loading">Kanallar yükleniyor…</string>
     <string name="browse_empty">Bu listede kanal yok</string>

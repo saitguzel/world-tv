@@ -36,6 +36,7 @@ import com.worldtv.core.designsystem.component.ChannelCardState
 import com.worldtv.core.designsystem.component.toCardState
 import com.worldtv.core.designsystem.mobile.component.MobileChannelCard
 import com.worldtv.core.model.ChannelSummary
+import com.worldtv.core.model.RadioStation
 import com.worldtv.feature.catalog.HomeViewModel
 import com.worldtv.feature.catalog.R
 import androidx.compose.foundation.layout.size
@@ -67,6 +68,8 @@ private val ShelfCardWidth = 160.dp
 fun MobileHomeScreen(
     onChannelSelected: (String) -> Unit,
     onCountrySelected: (String) -> Unit,
+    onCategorySelected: (String) -> Unit,
+    onRadioSelected: (String) -> Unit,
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
@@ -81,13 +84,20 @@ fun MobileHomeScreen(
     // LazyListScope, not a composition, so stringResource cannot be called there.
     val continueTitle = stringResource(R.string.home_continue)
     val favoritesTitle = stringResource(R.string.home_favorites)
+    val popularTitle = stringResource(R.string.home_popular)
     val countriesTitle = stringResource(R.string.home_countries)
+    val categoriesTitle = stringResource(R.string.home_categories)
+    val radioRecentTitle = stringResource(R.string.home_radio_recent)
+    val radioFavoritesTitle = stringResource(R.string.home_radio_favorites)
+    val radioPopularTitle = stringResource(R.string.home_radio_popular)
 
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.mode_tv)) },
+                // The app's name, not "TV": the TV tab in the navigation bar is now
+                // called that, and two things called TV on one screen is one too many.
+                title = { Text(stringResource(R.string.home_title)) },
                 actions = {
                     IconButton(onClick = onSettings) {
                         Icon(
@@ -148,6 +158,39 @@ fun MobileHomeScreen(
                     onChannelSelected(summary.channel.id)
                 },
             )
+
+            shelf(
+                title = popularTitle,
+                rows = state.popular,
+                onOpen = { summary ->
+                    viewModel.onChannelOpened(state.popular, summary.channel.id)
+                    onChannelSelected(summary.channel.id)
+                },
+            )
+
+            if (state.categories.isNotEmpty()) {
+                item { SectionTitle(categoriesTitle) }
+                item {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(state.categories, key = { it.id }) { category ->
+                            FilterChip(
+                                selected = false,
+                                onClick = { onCategorySelected(category.id) },
+                                label = { Text(category.name) },
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Radio last: this is the TV tab's landing screen, and the Radio tab is one
+            // tap away. Showing the stations anyway is what makes the app one app.
+            stationShelf(radioRecentTitle, state.radioRecents, onRadioSelected)
+            stationShelf(radioFavoritesTitle, state.radioFavorites, onRadioSelected)
+            stationShelf(radioPopularTitle, state.radioPopular, onRadioSelected)
         }
     }
 }
@@ -169,6 +212,33 @@ private fun androidx.compose.foundation.lazy.LazyListScope.shelf(
         ) {
             items(rows, key = { it.channel.id }) { summary ->
                 CardOf(summary.toCardState(), Modifier.width(ShelfCardWidth)) { onOpen(summary) }
+            }
+        }
+    }
+}
+
+/**
+ * A shelf of radio stations, rendered with the channel card.
+ *
+ * A station has a logo, a name and a health badge, which is exactly what the card
+ * shows; a second card component would only be a second thing to keep in step.
+ */
+internal fun androidx.compose.foundation.lazy.LazyListScope.stationShelf(
+    title: String,
+    stations: List<RadioStation>,
+    onOpen: (String) -> Unit,
+) {
+    if (stations.isEmpty()) return
+    item { SectionTitle(title) }
+    item {
+        LazyRow(
+            contentPadding = PaddingValues(start = 16.dp, end = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items(stations, key = { it.uuid }) { station ->
+                CardOf(station.toCardState(), Modifier.width(ShelfCardWidth)) {
+                    onOpen(station.uuid)
+                }
             }
         }
     }

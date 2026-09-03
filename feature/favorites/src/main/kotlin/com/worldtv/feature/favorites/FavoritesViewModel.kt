@@ -10,6 +10,7 @@ import com.worldtv.data.repository.HealthRepository
 import com.worldtv.data.repository.PlaybackQueueHolder
 import com.worldtv.data.repository.RadioRepository
 import com.worldtv.feature.radio.RadioController
+import com.worldtv.feature.radio.RadioUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,6 +34,10 @@ class FavoritesViewModel @Inject constructor(
     /** Radio favourites, newest first — shown below the channel grid on a phone. */
     val radioFavorites: StateFlow<List<RadioStation>> = radioRepository.favorites()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** What the radio session is doing, so a favourite row can say so honestly. */
+    val nowPlaying: StateFlow<RadioStation?> = radioController.nowPlaying
+    val radioPlayback: StateFlow<RadioUiState> = radioController.state
 
     val recents: StateFlow<List<ChannelSummary>> = channelRepository.recents()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

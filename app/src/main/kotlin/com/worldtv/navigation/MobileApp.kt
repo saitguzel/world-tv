@@ -7,13 +7,13 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import com.worldtv.core.designsystem.mobile.component.PauseIcon
+import com.worldtv.core.designsystem.component.PauseIcon
+import com.worldtv.core.designsystem.component.TvIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Surface
@@ -142,13 +142,13 @@ private data class NavItem(val route: String, val label: Int, val icon: ImageVec
 /**
  * Five entries, matching [Routes.TOP_LEVEL].
  *
- * Radio borrows the play glyph: `material-icons-core` has no radio, and pulling in
- * `material-icons-extended` for one icon would add thousands of unused vectors to the
- * APK. Worth replacing with a hand-drawn vector.
+ * TV and Radio use hand-drawn vectors: `material-icons-core` has neither, and pulling
+ * in `material-icons-extended` for two icons would add thousands of unused vectors to
+ * the APK.
  */
 private val NAV_ITEMS = listOf(
     NavItem(Routes.HOME, R.string.tab_home, Icons.Filled.Home),
-    NavItem(Routes.BROWSE_BASE, R.string.tab_browse, Icons.AutoMirrored.Filled.List),
+    NavItem(Routes.BROWSE_BASE, R.string.tab_browse, TvIcon),
     NavItem(Routes.SEARCH, R.string.tab_search, Icons.Filled.Search),
     NavItem(Routes.RADIO_BASE, R.string.tab_radio, RadioIcon),
     NavItem(Routes.FAVORITES, R.string.tab_favorites, Icons.Filled.Favorite),

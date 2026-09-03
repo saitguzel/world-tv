@@ -73,7 +73,8 @@ import com.worldtv.core.model.MediaTrack
 
 import com.worldtv.core.designsystem.mobile.component.FullscreenExitIcon
 import com.worldtv.core.designsystem.mobile.component.FullscreenIcon
-import com.worldtv.core.designsystem.mobile.component.PauseIcon
+import com.worldtv.core.designsystem.component.PauseIcon
+import com.worldtv.feature.player.PlayerLifecycleEffect
 import com.worldtv.core.model.HealthBadge
 import com.worldtv.feature.player.PlayerGesture
 import com.worldtv.feature.player.PlayerGestures
@@ -146,6 +147,8 @@ fun MobilePlayerScreen(
             ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
     }
+
+    PlayerLifecycleEffect(viewModel)
 
     LaunchedEffect(channelId) { viewModel.openChannel(channelId) }
 

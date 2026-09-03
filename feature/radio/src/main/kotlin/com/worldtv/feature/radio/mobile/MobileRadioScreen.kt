@@ -1,6 +1,5 @@
 package com.worldtv.feature.radio.mobile
 
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,7 +9,6 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -26,18 +24,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.worldtv.core.designsystem.component.HealthDot
-import com.worldtv.core.model.RadioStation
+import com.worldtv.core.designsystem.component.stationPlayback
+import com.worldtv.core.designsystem.component.toRowState
+import com.worldtv.core.designsystem.mobile.component.MobileStationRow
 import com.worldtv.feature.radio.R
 import com.worldtv.feature.radio.RadioViewModel
-import com.worldtv.core.model.badge
-import com.worldtv.core.model.describe
 import com.worldtv.core.designsystem.component.ShuffleIcon
 
 /**
@@ -69,6 +65,7 @@ fun MobileRadioScreen(
     val countries by viewModel.availableCountries.collectAsStateWithLifecycle()
     val categories by viewModel.availableCategories.collectAsStateWithLifecycle()
     val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
+    val playback by viewModel.playback.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
     val selectedCountry by viewModel.country.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.category.collectAsStateWithLifecycle()
@@ -115,10 +112,15 @@ fun MobileRadioScreen(
                     )
                 }
                 items(favorites, key = { "fav-" + it.uuid }) { station ->
-                    StationRow(
-                        station = station,
-                        isFavorite = true,
-                        isCurrent = station.uuid == nowPlaying?.uuid,
+                    MobileStationRow(
+                        state = station.toRowState(
+                            isFavorite = true,
+                            playback = stationPlayback(
+                                isCurrent = station.uuid == nowPlaying?.uuid,
+                                isPlaying = playback.playing,
+                                isBuffering = playback.buffering,
+                            ),
+                        ),
                         onClick = {
                             requestNotifications()
                             viewModel.play(station)
@@ -144,10 +146,15 @@ fun MobileRadioScreen(
             ) { index ->
                 val station = stations[index] ?: return@items
                 val isFavorite = station.uuid in favoriteUuids
-                StationRow(
-                    station = station,
-                    isFavorite = isFavorite,
-                    isCurrent = station.uuid == nowPlaying?.uuid,
+                MobileStationRow(
+                    state = station.toRowState(
+                        isFavorite = isFavorite,
+                        playback = stationPlayback(
+                            isCurrent = station.uuid == nowPlaying?.uuid,
+                            isPlaying = playback.playing,
+                            isBuffering = playback.buffering,
+                        ),
+                    ),
                     onClick = {
                         requestNotifications()
                         viewModel.play(station)
@@ -175,35 +182,3 @@ fun MobileRadioScreen(
     }
 }
 
-@Composable
-private fun StationRow(
-    station: RadioStation,
-    isFavorite: Boolean,
-    isCurrent: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-) {
-    ListItem(
-        // Material 3's ListItem is a layout container with no click handling of its
-        // own, unlike the TV one — without this wrapper the row would be inert.
-        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
-        headlineContent = {
-            Text(
-                text = if (isFavorite) {
-                    stringResource(R.string.radio_favorite_marker, station.name)
-                } else {
-                    station.name
-                },
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = if (isCurrent) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-            )
-        },
-        supportingContent = { Text(station.describe(), maxLines = 1) },
-        leadingContent = { HealthDot(station.badge()) },
-    )
-}

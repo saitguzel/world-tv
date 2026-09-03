@@ -128,6 +128,51 @@ interface ChannelDao {
     fun recentChannels(limit: Int): Flow<List<ChannelWithHealth>>
 
     /**
+     * The channels most likely to be worth opening, for the home screen.
+     *
+     * The catalog carries no view counts — unlike radio, where Radio Browser publishes
+     * one — so "popular" here is ranked on what the app does know: how many streams have
+     * been verified, and how fast the fastest of them answered. That is the closest
+     * honest proxy, and it is also the ordering that makes a first-run home screen
+     * useful before any history exists.
+     */
+    @Transaction
+    @Query(
+        """
+        SELECT c.id, c.name, c.country, c.categories, c.logoUrl, c.isNsfw, c.isClosed,
+               c.replacedBy,
+               COUNT(s.id) AS availableStreams,
+               SUM(CASE WHEN s.state = 'OK' THEN 1 ELSE 0 END) AS verifiedStreams,
+               SUM(CASE WHEN s.state = 'GEO_BLOCKED' THEN 1 ELSE 0 END) AS geoBlockedStreams,
+               MIN(NULLIF(s.lastLatencyMs, 0)) AS bestLatencyMs,
+               (f.id IS NOT NULL) AS isFavorite
+        FROM channels c
+        JOIN streams s ON s.channelId = c.id
+        LEFT JOIN favorites f ON f.id = c.id AND f.kind = 'channel'
+        WHERE c.isClosed = 0
+          AND c.id NOT IN (SELECT channelId FROM blocklist)
+          AND (:showNsfw OR c.isNsfw = 0)
+          AND s.state != 'DEAD'
+          AND (:showGeoBlocked OR s.state != 'GEO_BLOCKED')
+          AND (:showUnchecked OR s.state != 'UNKNOWN')
+          AND (:country IS NULL OR c.country = :country)
+        GROUP BY c.id
+        ORDER BY verifiedStreams DESC,
+                 bestLatencyMs IS NULL, bestLatencyMs ASC,
+                 availableStreams DESC,
+                 c.name COLLATE NOCASE ASC
+        LIMIT :limit
+        """,
+    )
+    fun popularChannels(
+        country: String?,
+        showNsfw: Boolean,
+        showGeoBlocked: Boolean,
+        showUnchecked: Boolean,
+        limit: Int,
+    ): Flow<List<ChannelWithHealth>>
+
+    /**
      * Search over the normalised haystack.
      *
      * The caller must normalise the query with the same `TextNormalizer` used at write

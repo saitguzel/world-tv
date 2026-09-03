@@ -26,10 +26,10 @@ import android.speech.RecognizerIntent
 import androidx.tv.material3.Button
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.FilterChip
-import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.worldtv.core.designsystem.component.HealthDot
+import com.worldtv.core.designsystem.component.toRowState
+import com.worldtv.core.designsystem.tv.component.TvStationRow
 import com.worldtv.core.designsystem.tv.component.ChannelCard
 import com.worldtv.core.designsystem.tv.component.TvChannelGrid
 import com.worldtv.core.designsystem.component.toCardState
@@ -41,8 +41,6 @@ import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 import androidx.compose.ui.res.stringResource
 import com.worldtv.feature.catalog.R
-import com.worldtv.core.model.badge
-import com.worldtv.core.model.describe
 import androidx.compose.foundation.layout.size
 import androidx.tv.material3.Icon
 import com.worldtv.core.designsystem.component.RadioIcon
@@ -268,16 +266,12 @@ private fun RadioResultList(
     LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         items(stations.size, key = { stations[it].uuid }) { index ->
             val station = stations[index]
-            ListItem(
-                selected = false,
+            TvStationRow(
+                state = station.toRowState(),
                 onClick = {
                     viewModel.recordRadioOpened()
                     onRadioSelected(station.uuid)
                 },
-                headlineContent = { Text(station.name) },
-                supportingContent = { Text(station.describe(), color = WorldTvColors.OnSurfaceMuted) },
-                trailingContent = { HealthDot(station.badge()) },
-                modifier = Modifier.fillMaxWidth(),
             )
         }
     }

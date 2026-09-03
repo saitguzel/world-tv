@@ -1,13 +1,11 @@
 package com.worldtv.feature.favorites.mobile
 
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -26,23 +24,18 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.worldtv.core.designsystem.component.HealthDot
+import com.worldtv.core.designsystem.component.stationPlayback
+import com.worldtv.core.designsystem.component.toRowState
+import com.worldtv.core.designsystem.mobile.component.MobileStationRow
 import com.worldtv.core.designsystem.component.toCardState
 import com.worldtv.core.designsystem.mobile.component.MobileChannelCard
 import com.worldtv.core.designsystem.mobile.component.MobileChannelGrid
-import com.worldtv.core.model.RadioStation
 import com.worldtv.feature.favorites.FavoritesViewModel
 import com.worldtv.feature.favorites.R
 import kotlinx.coroutines.launch
-import com.worldtv.core.model.badge
-import com.worldtv.core.model.describe
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Icon
 import com.worldtv.feature.radio.mobile.rememberNotificationPermissionRequest
 
 /**
@@ -68,6 +61,8 @@ fun MobileFavoritesScreen(
 ) {
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
     val radioFavorites by viewModel.radioFavorites.collectAsStateWithLifecycle()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
+    val radioPlayback by viewModel.radioPlayback.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
@@ -144,13 +139,20 @@ fun MobileFavoritesScreen(
                     // into one third of the width like a card.
                     span = { GridItemSpan(maxLineSpan) },
                 ) { station ->
-                    RadioFavoriteRow(
-                        station = station,
-                        onPlay = {
+                    MobileStationRow(
+                        state = station.toRowState(
+                            isFavorite = true,
+                            playback = stationPlayback(
+                                isCurrent = station.uuid == nowPlaying?.uuid,
+                                isPlaying = radioPlayback.playing,
+                                isBuffering = radioPlayback.buffering,
+                            ),
+                        ),
+                        onClick = {
                             requestNotifications()
                             viewModel.playRadio(station)
                         },
-                        onRemove = {
+                        onLongClick = {
                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             viewModel.toggleRadioFavorite(station.uuid, currentlyFavorite = true)
                             scope.launch {
@@ -180,25 +182,5 @@ private fun SectionTitle(text: String) {
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.padding(vertical = 8.dp),
-    )
-}
-
-@Composable
-private fun RadioFavoriteRow(
-    station: RadioStation,
-    onPlay: () -> Unit,
-    onRemove: () -> Unit,
-) {
-    ListItem(
-        // Material 3's ListItem handles no clicks on its own — same wrapper the radio
-        // list uses.
-        modifier = Modifier.combinedClickable(onClick = onPlay, onLongClick = onRemove),
-        headlineContent = {
-            Text(station.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        },
-        supportingContent = { Text(station.describe(), maxLines = 1) },
-        leadingContent = { HealthDot(station.badge()) },
-        // Cards make their purpose obvious; a row does not, so say that a tap plays.
-        trailingContent = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
     )
 }

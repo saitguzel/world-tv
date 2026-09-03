@@ -52,19 +52,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.worldtv.core.designsystem.component.HealthDot
+import com.worldtv.core.designsystem.component.toRowState
+import com.worldtv.core.designsystem.mobile.component.MobileStationRow
 import com.worldtv.core.designsystem.component.toCardState
 import com.worldtv.core.designsystem.mobile.component.MobileChannelCard
 import com.worldtv.core.designsystem.mobile.component.MobileChannelGrid
 import com.worldtv.feature.catalog.R
 import com.worldtv.feature.catalog.SearchKind
 import com.worldtv.feature.catalog.SearchViewModel
-import com.worldtv.core.model.badge
-import com.worldtv.core.model.describe
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.filled.Place
 import com.worldtv.core.designsystem.component.RadioIcon
@@ -268,16 +266,12 @@ fun MobileSearchScreen(
                     }
                     LazyColumn(Modifier.imePadding()) {
                         items(radioResults, key = { it.uuid }) { station ->
-                            ListItem(
-                                modifier = Modifier.clickable {
+                            MobileStationRow(
+                                state = station.toRowState(),
+                                onClick = {
                                     viewModel.recordRadioOpened()
                                     onRadioSelected(station.uuid)
                                 },
-                                headlineContent = {
-                                    Text(station.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                },
-                                supportingContent = { Text(station.describe(), maxLines = 1) },
-                                leadingContent = { HealthDot(station.badge()) },
                             )
                         }
                     }

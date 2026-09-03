@@ -30,7 +30,14 @@ fun WorldTvNavHost(
     // user to navigate there — that is the whole point of speaking to the TV.
     val pendingVoiceQuery by voiceQuery.collectAsStateWithLifecycle()
     LaunchedEffect(pendingVoiceQuery) {
-        if (!pendingVoiceQuery.isNullOrBlank()) navController.navigate(Routes.SEARCH)
+        if (pendingVoiceQuery.isNullOrBlank()) return@LaunchedEffect
+        // Leaves the player rather than stacking search on top of it. Search is where
+        // the user is going *instead of* watching, so back from there belongs to the
+        // list they came from, not to a channel still sitting underneath.
+        if (Routes.isPlayer(navController.currentDestination?.route)) {
+            navController.popBackStack()
+        }
+        navController.navigate(Routes.SEARCH)
     }
 
     val toPlayer: (String) -> Unit = { channelId ->
@@ -42,6 +49,10 @@ fun WorldTvNavHost(
             HomeScreen(
                 onExit = onExit,
                 onChannelSelected = toPlayer,
+                // The radio route starts the station it names, so home needs no
+                // dependency on the radio feature to play one.
+                onRadioSelected = { station -> navController.navigate(Routes.radio(station)) },
+                onCategorySelected = { navController.navigate(Routes.browse(category = it)) },
                 onBrowse = { navController.navigate(Routes.browse()) },
                 onSearch = { navController.navigate(Routes.SEARCH) },
                 onRadio = { navController.navigate(Routes.radio()) },
@@ -59,10 +70,16 @@ fun WorldTvNavHost(
                     nullable = true
                     defaultValue = null
                 },
+                navArgument("category") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
             ),
         ) { entry ->
             BrowseScreen(
                 initialCountry = entry.arguments?.getString("country"),
+                initialCategory = entry.arguments?.getString("category"),
                 onChannelSelected = toPlayer,
             )
         }

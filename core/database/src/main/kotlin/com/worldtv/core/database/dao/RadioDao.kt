@@ -174,6 +174,39 @@ interface RadioDao {
     )
     suspend fun randomStation(country: String?, tag: String?): RadioStationEntity?
 
+    /**
+     * Stations listened to recently, newest first.
+     *
+     * The mirror of [ChannelDao.recentChannels]: playing a station has always written a
+     * `recents` row with `kind = 'radio'`, and nothing ever read them back.
+     */
+    @Query(
+        """
+        SELECT s.* FROM radio_stations s
+        JOIN recents r ON r.id = s.uuid AND r.kind = 'radio'
+        WHERE s.state != 'DEAD'
+        ORDER BY r.watchedAt DESC
+        LIMIT :limit
+        """,
+    )
+    fun recentStations(limit: Int): Flow<List<RadioStationEntity>>
+
+    /** The head of the same ranking the station list uses: alive, verified, most played. */
+    @Query(
+        """
+        SELECT * FROM radio_stations
+        WHERE state != 'DEAD'
+          AND (:country IS NULL OR countryCode = :country)
+        ORDER BY (state = 'OK') DESC, serverSideOk DESC, clickCount DESC
+        LIMIT :limit
+        """,
+    )
+    fun popularStations(country: String?, limit: Int): Flow<List<RadioStationEntity>>
+
     @Query("SELECT COUNT(*) FROM radio_stations")
     suspend fun count(): Int
+
+    /** Observed, for the home screen's "is there anything here at all" question. */
+    @Query("SELECT COUNT(*) FROM radio_stations")
+    fun countFlow(): Flow<Int>
 }

@@ -1,4 +1,4 @@
-# Mimari İnceleme — WorldTV
+# Mimari İnceleme — Meridyen
 
 Bu belge, `mimari.md` dokümanının kodlanmadan önceki incelemesidir. Genel yapı
 sağlam ve doğrudan uygulanabilir; aşağıdaki maddeler uygulanırken **düzeltilmesi

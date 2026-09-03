@@ -79,6 +79,7 @@ import com.worldtv.core.designsystem.component.ShuffleIcon
 fun MobileBrowseScreen(
     onChannelSelected: (String) -> Unit,
     initialCountry: String? = null,
+    initialCategory: String? = null,
     modifier: Modifier = Modifier,
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
@@ -100,6 +101,9 @@ fun MobileBrowseScreen(
 
     LaunchedEffect(initialCountry) {
         if (initialCountry != null) viewModel.setCountry(initialCountry)
+    }
+    LaunchedEffect(initialCategory) {
+        if (initialCategory != null) viewModel.setCategory(initialCategory)
     }
 
     TrackVisibleChannels(

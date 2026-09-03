@@ -55,6 +55,22 @@ class RadioRepository @Inject constructor(
         dao.search(TextNormalizer.normalize(query), country, limit)
             .map { list -> list.map(RadioStationEntity::toModel) }
 
+    /** Stations the user has actually listened to, newest first. */
+    fun recents(limit: Int = 12): Flow<List<RadioStation>> =
+        dao.recentStations(limit).map { list -> list.map(RadioStationEntity::toModel) }
+
+    /**
+     * The most-played stations, optionally narrowed to one country.
+     *
+     * Radio Browser's click count is the only popularity signal in the catalog, and it
+     * is the same ordering the full list uses — this is its head, for a home shelf.
+     */
+    fun popular(country: String? = null, limit: Int = 12): Flow<List<RadioStation>> =
+        dao.popularStations(country, limit).map { list -> list.map(RadioStationEntity::toModel) }
+
+    /** Whether any stations have been downloaded; drives the home screen's empty state. */
+    fun stationCount(): Flow<Int> = dao.countFlow()
+
     fun availableCountries(): Flow<List<String>> = dao.availableCountries()
 
     /** One station at random from the current country/tag filter, if any exists. */

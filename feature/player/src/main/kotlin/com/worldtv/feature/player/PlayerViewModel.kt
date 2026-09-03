@@ -111,11 +111,9 @@ class PlayerViewModel @Inject constructor(
         .flatMapLatest { ids -> channelRepository.summaries(ids) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(1_000), emptyList())
 
-    val player: ExoPlayer by lazy {
+    private val playerDelegate = lazy {
         playerFactory.create().also { exoPlayer ->
             // The one place an ExoPlayer comes into existence, on both form factors.
-            // Tells the radio a video now holds audio focus.
-            videoSignal.acquire()
             exoPlayer.addListener(listener)
             // Standing preference applied before anything loads, since the stream's
             // tracks are not known yet.
@@ -125,8 +123,43 @@ class PlayerViewModel @Inject constructor(
                 captionLanguage = captionSettings.preferredLanguage,
                 deviceLanguage = captionSettings.deviceLanguage,
             )
+            // Claiming focus last is deliberate: `lazy` does not cache a failed
+            // initialisation, so a throw above would leave a claim behind that the
+            // retry then makes again, and a count that never falls back to zero
+            // disables the radio's resume for the life of the process.
+            if (isActive) holdSignal()
         }
     }
+
+    /**
+     * The player, built on first touch.
+     *
+     * Reached through the delegate rather than `by lazy` directly so [onCleared] can
+     * ask whether one was ever built. Touching the property there would construct a
+     * player purely to destroy it, and the acquire/release pair that comes with it
+     * reads to the radio as "the video just ended" — a resume nobody asked for.
+     */
+    val player: ExoPlayer by playerDelegate
+
+    /** Whether this view model currently counts as a video holder. Main thread only. */
+    private var holdsSignal = false
+
+    /**
+     * Whether the screen showing this player is started.
+     *
+     * The player used to live until its back-stack entry was popped, so pressing Home —
+     * or pushing any destination over the player without popping it, which the voice
+     * search intent does — left video decoding, audible, and holding audio focus. The
+     * focus was never abandoned either, which is what left the radio unable to resume.
+     */
+    private var isActive = true
+
+    /**
+     * The user's standing wish, in the radio's sense: it survives the screen stopping,
+     * and only a pause press clears it. Without it, coming back from the background
+     * would restart a stream the user had deliberately paused.
+     */
+    private var userWantsPlayback = true
 
     /** Latest track set reported by the player, needed to apply a selection. */
     private var currentTracks: Tracks = Tracks.EMPTY
@@ -303,7 +336,11 @@ class PlayerViewModel @Inject constructor(
                 .createMediaSource(playerFactory.mediaItem(stream)),
         )
         player.prepare()
-        player.playWhenReady = true
+        // Opening a channel is a request to play, but the screen may have stopped while
+        // the stream was still being resolved — starting then would put audio behind a
+        // backgrounded app. [setActive] starts it on the way back.
+        userWantsPlayback = true
+        player.playWhenReady = isActive
 
         watchForSlowLoad()
     }
@@ -379,7 +416,39 @@ class PlayerViewModel @Inject constructor(
      * button is simply incomplete.
      */
     fun togglePlayPause() {
-        player.playWhenReady = !player.playWhenReady
+        userWantsPlayback = !player.playWhenReady
+        player.playWhenReady = userWantsPlayback
+    }
+
+    /**
+     * Follows the lifecycle of whatever is showing the player.
+     *
+     * Stopping abandons audio focus as well as pausing. Pausing alone is not enough:
+     * focus is what the radio waits on, so a paused player that still held it would
+     * keep the radio silent with nothing at all playing.
+     */
+    fun setActive(active: Boolean) {
+        isActive = active
+        if (!playerDelegate.isInitialized()) return
+        if (active) {
+            holdSignal()
+            player.playWhenReady = userWantsPlayback
+        } else {
+            player.playWhenReady = false
+            dropSignal()
+        }
+    }
+
+    private fun holdSignal() {
+        if (holdsSignal) return
+        holdsSignal = true
+        videoSignal.acquire()
+    }
+
+    private fun dropSignal() {
+        if (!holdsSignal) return
+        holdsSignal = false
+        videoSignal.release()
     }
 
     fun openTrackPicker() =
@@ -417,11 +486,17 @@ class PlayerViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        player.removeListener(listener)
-        player.release()
-        // After release, not before: release is what actually abandons audio focus, and
-        // the radio resuming earlier would collide with a player still holding it.
-        videoSignal.release()
+        // Asked of the delegate, not the property: a view model that never showed a
+        // surface — an unavailable channel, an immediate back — would otherwise build a
+        // player here just to tear it down.
+        if (playerDelegate.isInitialized()) {
+            player.removeListener(listener)
+            player.release()
+            // After release, not before: release is what actually abandons audio focus,
+            // and the radio resuming earlier would collide with a player still holding
+            // it. A no-op when the screen already stopped and let go.
+            dropSignal()
+        }
         super.onCleared()
     }
 

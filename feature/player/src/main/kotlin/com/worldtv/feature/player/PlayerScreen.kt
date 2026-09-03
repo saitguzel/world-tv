@@ -63,6 +63,8 @@ fun PlayerScreen(
     val repeatLimiter = rememberKeyRepeatLimiter()
     val view = LocalView.current
 
+    PlayerLifecycleEffect(viewModel)
+
     LaunchedEffect(channelId) { viewModel.openChannel(channelId) }
 
     // Nothing on this screen is focusable by default, so the container has to take

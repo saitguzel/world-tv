@@ -7,6 +7,9 @@
     <string name="a11y_state_unavailable">şu an kullanılamıyor</string>
     <string name="a11y_favorite">favori</string>
     <string name="a11y_now_playing">şu an: %1$s</string>
+    <string name="a11y_playing">çalıyor</string>
+    <string name="a11y_paused">duraklatıldı</string>
+    <string name="a11y_buffering">bağlanıyor</string>
 
     <string name="programme_next">Sıradaki: %1$s</string>
 

@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
  * Glyphs that material-icons-core does not ship, drawn from the Material path data.
  *
  * The packaged alternative is material-icons-extended: several thousand vectors for
- * the sake of four. These are neutral (plain ImageVectors), so both the TV and the
+ * the sake of a handful. These are neutral (plain ImageVectors), so both the TV and the
  * phone tree can use them; Icon() tints them, so the fill colour here is irrelevant.
  */
 
@@ -52,6 +52,40 @@ val WifiOffIcon: ImageVector by lazy {
             "7.78 1 9l1.99 2c1.24-1.24 2.67-2.16 4.2-2.77l2.24 2.24C7.81 10.89 6.27 11.85 5 13" +
             "v.01L6.99 15c1.36-1.36 3.14-2.04 4.92-2.06L18.98 20l1.27-1.26L3.29 1.79 2 3.05z" +
             "M9 17l3 3 3-3c-1.65-1.66-4.34-1.66-6 0z",
+    )
+}
+
+/** Material "volume_up": a station row that is actually on air. */
+val VolumeUpIcon: ImageVector by lazy {
+    icon(
+        "VolumeUp",
+        "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" +
+            "M14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77" +
+            "s-2.99-7.86-7-8.77z",
+    )
+}
+
+/**
+ * A pause glyph.
+ *
+ * Two rectangles, because `material-icons-core` ships about fifty icons and pause is
+ * not among them. It lives here rather than beside the phone components because the
+ * station rows on both form factors show it.
+ */
+val PauseIcon: ImageVector by lazy { icon("Pause", "M6,5h4v14h-4zM14,5h4v14h-4z") }
+
+/**
+ * Material "favorite".
+ *
+ * Replaces the "★ %s" prefix the radio rows used to put in front of a station's name:
+ * a marker glued to the title truncates with it, and reads out as part of the name.
+ */
+val FavoriteIcon: ImageVector by lazy {
+    icon(
+        "Favorite",
+        "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 " +
+            "2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 " +
+            "11.54L12 21.35z",
     )
 }
 

@@ -36,6 +36,15 @@ class RadioViewModel @Inject constructor(
     val nowPlaying: StateFlow<RadioStation?> = controller.nowPlaying
     val isPlaying: StateFlow<Boolean> = controller.isPlaying
 
+    /**
+     * The session's own account of itself, for the rows.
+     *
+     * The lists used to mark the current station as playing and never read anything
+     * else, so a station that was paused, ducked by a notification or dead on arrival
+     * still showed as on air.
+     */
+    val playback: StateFlow<RadioUiState> = controller.state
+
     private val _country = MutableStateFlow<String?>(null)
     val country: StateFlow<String?> = _country.asStateFlow()
 

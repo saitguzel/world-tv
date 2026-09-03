@@ -84,9 +84,22 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Assistant delivers a query through a new intent when the app is already running,
-     * so reading it once in [onCreate] would miss every search after the first.
+     * Attaches to the radio session, if one is running.
+     *
+     * The phone shell does this on its own — its mini player asks for the connection at
+     * startup — but the television has no such bar, so nothing on TV ever connected.
+     * A session that survived the process was then invisible there *and* unstoppable:
+     * [onDestroy] asks the controller to stop, and a controller that has never
+     * connected has no station on record and returns without doing anything.
+     *
+     * Connecting is cheap and idempotent; the controller keeps one connection and
+     * queues concurrent callers.
      */
+    override fun onStart() {
+        super.onStart()
+        radioController.connect()
+    }
+
     /**
      * App closed for real: stop the radio.
      *
@@ -103,6 +116,10 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    /**
+     * Assistant delivers a query through a new intent when the app is already running,
+     * so reading it once in [onCreate] would miss every search after the first.
+     */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)

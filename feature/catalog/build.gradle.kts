@@ -6,6 +6,10 @@ plugins {
 
 android {
     namespace = "com.worldtv.feature.catalog"
+    testOptions {
+        // Robolectric needs the merged resources to resolve stringResource() calls.
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -37,4 +41,13 @@ dependencies {
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlinx.coroutines.test)
     testRuntimeOnly(libs.junit.platform.launcher)
+
+    // Screen tests on the JVM, set up exactly as :feature:player is: the Compose test
+    // rule is a JUnit 4 rule and this module runs on the JUnit Platform, so without the
+    // vintage engine those tests would not fail — they would silently never run.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.junit4)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    testRuntimeOnly(libs.junit.vintage.engine)
 }

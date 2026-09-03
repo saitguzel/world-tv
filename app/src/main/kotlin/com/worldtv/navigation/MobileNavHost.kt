@@ -42,7 +42,14 @@ fun MobileNavHost(
 ) {
     val pendingVoiceQuery by voiceQuery.collectAsStateWithLifecycle()
     LaunchedEffect(pendingVoiceQuery) {
-        if (!pendingVoiceQuery.isNullOrBlank()) navController.navigate(Routes.SEARCH)
+        if (pendingVoiceQuery.isNullOrBlank()) return@LaunchedEffect
+        // Leaves the player rather than stacking search on top of it. Search is where
+        // the user is going *instead of* watching, so back from there belongs to the
+        // list they came from, not to a channel still sitting underneath.
+        if (Routes.isPlayer(navController.currentDestination?.route)) {
+            navController.popBackStack()
+        }
+        navController.navigate(Routes.SEARCH)
     }
 
     NavHost(
@@ -54,6 +61,11 @@ fun MobileNavHost(
             MobileHomeScreen(
                 onChannelSelected = { navController.navigate(Routes.player(it)) },
                 onCountrySelected = { navController.navigate(Routes.browse(it)) },
+                onCategorySelected = { navController.navigate(Routes.browse(category = it)) },
+                // Navigation rather than a call into the radio session: the route
+                // already starts a named station, and :feature:catalog stays free of a
+                // dependency on :feature:radio.
+                onRadioSelected = { station -> navController.navigate(Routes.radio(station)) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
             )
         }
@@ -66,10 +78,16 @@ fun MobileNavHost(
                     nullable = true
                     defaultValue = null
                 },
+                navArgument("category") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
             ),
         ) { entry ->
             MobileBrowseScreen(
                 initialCountry = entry.arguments?.getString("country"),
+                initialCategory = entry.arguments?.getString("category"),
                 onChannelSelected = { navController.navigate(Routes.player(it)) },
             )
         }

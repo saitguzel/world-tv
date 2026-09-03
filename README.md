@@ -1,4 +1,4 @@
-# WorldTV
+# Meridyen
 
 Android TV / Google TV için canlı TV (IPTV) ve online radyo uygulaması.
 
@@ -150,7 +150,7 @@ tüm katalog ölü işaretlenmez.
 
 ## İçerik bildirimi
 
-WorldTV hiçbir içerik barındırmaz veya yayınlamaz. Tüm yayın adresleri herkese
+Meridyen hiçbir içerik barındırmaz veya yayınlamaz. Tüm yayın adresleri herkese
 açık [iptv-org](https://github.com/iptv-org/iptv) ve
 [Radio Browser](https://www.radio-browser.info/) dizinlerinden gelir.
 iptv-org `blocklist.json` (DMCA ile kaldırılanlar) filtresi zorunlu olarak

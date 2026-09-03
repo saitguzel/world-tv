@@ -1,10 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    The Meridyen mark: a core with two pairs of arcs opening left and right.
+
+    Read either way on purpose — meridians around a globe, and a signal leaving a
+    transmitter — because the app is a television catalogue and a radio catalogue in
+    one. Drawn as strokes with round caps so it survives being scaled to 48px, and as
+    one flat colour so the monochrome (themed) icon needs no separate asset.
+
+    Everything sits inside the 66dp safe circle of the 108dp canvas: the outermost arc
+    reaches 30.25dp from the centre, well within the 33dp radius the mask can clip to.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- The core. -->
     <path
         android:fillColor="#4DA3FF"
-        android:pathData="M30,38h48v32h-48zM46,74h16v6h-16z" />
+        android:pathData="M46.5,54 A7.5,7.5 0 1 1 61.5,54 A7.5,7.5 0 1 1 46.5,54 Z" />
+
+    <!-- Inner pair. -->
+    <path
+        android:strokeColor="#4DA3FF"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round"
+        android:pathData="M65.375,41.367 A17,17 0 0 1 65.375,66.633" />
+    <path
+        android:strokeColor="#4DA3FF"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round"
+        android:pathData="M42.625,41.367 A17,17 0 0 0 42.625,66.633" />
+
+    <!-- Outer pair. -->
+    <path
+        android:strokeColor="#4DA3FF"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round"
+        android:pathData="M72.401,33.564 A27.5,27.5 0 0 1 72.401,74.436" />
+    <path
+        android:strokeColor="#4DA3FF"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round"
+        android:pathData="M35.599,33.564 A27.5,27.5 0 0 0 35.599,74.436" />
 </vector>

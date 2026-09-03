@@ -88,7 +88,7 @@ Kaldırmak için: `adb uninstall com.worldtv.debug`
 
 ## İlk açılış
 
-Uygulama TV ana ekranında **WorldTV** olarak görünür (`LEANBACK_LAUNCHER` sayesinde).
+Uygulama TV ana ekranında **Meridyen** olarak görünür (`LEANBACK_LAUNCHER` sayesinde).
 
 İlk açılışta katalog boştur — arka planda iptv-org ve Radio Browser dizinleri
 indirilir (~20 MB). Ana ekranda **"Katalog henüz indirilmedi"** görürseniz

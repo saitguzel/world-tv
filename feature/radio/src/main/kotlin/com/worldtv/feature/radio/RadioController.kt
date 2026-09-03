@@ -19,12 +19,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -43,10 +41,14 @@ import kotlinx.coroutines.withContext
  * bar showing a pause icon over silence. [RadioPlaybackState] now decides everything
  * and this class only translates media3 callbacks into its vocabulary.
  *
+ * Opening a channel ends the radio session: the video takes audio focus, the session
+ * stops, and nothing brings it back on its own. See [RadioPlaybackState] for why that
+ * is deliberate.
+ *
  * Threading: media3 delivers listener callbacks on the application thread and requires
- * the controller to be touched there. The resume collector runs on the application
- * scope, which is `Dispatchers.Default`, so every command it issues hops to Main first.
- * That hop is not optional; skipping it is an exception at runtime.
+ * the controller to be touched there. Every caller of [play], [togglePlayPause] and
+ * [stop] is already on Main; the one background hop left is [resolveStation], which
+ * reads the database and hops back before it touches any state.
  */
 @Singleton
 class RadioController @Inject constructor(
@@ -71,6 +73,12 @@ class RadioController @Inject constructor(
 
     private var controller: MediaController? = null
     private var pending: ListenableFuture<MediaController>? = null
+
+    /**
+     * Set once the app is closing, so a connection still in flight is stopped and
+     * released on arrival instead of becoming a live session nobody is left to stop.
+     */
+    private var closing = false
     private val waiting = mutableListOf<(MediaController) -> Unit>()
 
     private val playerListener = object : Player.Listener {
@@ -89,30 +97,12 @@ class RadioController @Inject constructor(
             if (id == null) _nowPlaying.value = null
         }
 
-        // The whole resume feature rests on this reason code. A focus loss is the
-        // system taking the radio away, and the user still wants it; a user request is
-        // the user changing their mind. Both look identical from outside.
-        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-            if (playWhenReady) return
-            val cause = when (reason) {
-                Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS -> PauseCause.FOCUS_LOSS
-                Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST,
-                Player.PLAY_WHEN_READY_CHANGE_REASON_REMOTE -> PauseCause.USER
-                else -> return
-            }
-            publish(rules.onSessionPaused(cause))
-        }
-
-        override fun onPlaybackSuppressionReasonChanged(reason: Int) {
-            // A transient duck is media3's to undo. Recording it keeps the icon honest
-            // without letting the resume collector claim it.
-            if (reason == Player.PLAYBACK_SUPPRESSION_REASON_TRANSIENT_AUDIO_FOCUS_LOSS) {
-                publish(rules.onSessionPaused(PauseCause.TRANSIENT))
-            }
-        }
-
+        // No onPlayWhenReadyChanged, and no suppression handler: those existed to tell
+        // a focus loss from a user pause, and only the resume rule ever needed that
+        // distinction. isPlaying already goes false for both — and for a transient duck,
+        // which media3 undoes by itself.
         override fun onPlayerError(error: PlaybackException) {
-            publish(rules.onSessionPaused(PauseCause.ERROR))
+            publish(rules.onSessionError())
         }
     }
 
@@ -123,14 +113,6 @@ class RadioController @Inject constructor(
             this@RadioController.controller = null
             pending = null
             publish(rules.onDisconnected())
-        }
-    }
-
-    init {
-        scope.launch {
-            videoSignal.videoActive
-                .filter { !it }
-                .collect { onVideoReleased() }
         }
     }
 
@@ -156,9 +138,20 @@ class RadioController @Inject constructor(
             {
                 pending = null
                 val ready = runCatching { future.get() }.getOrNull()
+                if (closing) {
+                    // The app asked to stop while this was connecting; the connection
+                    // arrives only to be used for that.
+                    ready?.stop()
+                    ready?.release()
+                    waiting.clear()
+                    return@addListener
+                }
                 if (ready == null) {
                     waiting.clear()
                     publish(rules.onConnectFailed())
+                    // The name too, not just the rule: play() sets this optimistically,
+                    // and leaving it behind is what kept a dead station on the bar.
+                    _nowPlaying.value = null
                     return@addListener
                 }
                 controller = ready
@@ -182,9 +175,13 @@ class RadioController @Inject constructor(
      */
     private fun seedFrom(ready: MediaController) {
         val id = ready.currentMediaItem?.mediaId
-        publish(rules.onSessionItemChanged(id))
-        publish(rules.onSessionPlayingChanged(ready.isPlaying))
-        publish(rules.onSessionBufferingChanged(ready.playbackState == Player.STATE_BUFFERING))
+        publish(
+            rules.onSessionSeeded(
+                stationId = id,
+                playing = ready.isPlaying,
+                buffering = ready.playbackState == Player.STATE_BUFFERING,
+            ),
+        )
         if (id != null && _nowPlaying.value?.uuid != id) resolveStation(id)
     }
 
@@ -200,43 +197,35 @@ class RadioController @Inject constructor(
 
     fun togglePlayPause() {
         when (rules.onUserToggle(videoActive = videoSignal.videoActive.value)) {
+            // prepare, not just play: these are live streams, and after any real pause
+            // the origin has dropped the connection and the buffer is stale. Preparing
+            // reopens at the live edge, which is the only "where it left off" a live
+            // stream has.
             ToggleAction.Play -> connect { it.prepare(); it.play() }
             ToggleAction.Pause -> connect { it.pause() }
-            // Video holds focus. Playing now would silently kill the channel the user is
-            // watching, from a bar they are not looking at. The collector starts us
-            // once the video goes away.
-            ToggleAction.DeferUntilVideoEnds -> Unit
             ToggleAction.Nothing -> Unit
         }
         publish(rules.current)
     }
 
+    /**
+     * The app is closing: end playback and let the service go.
+     *
+     * Stopping alone left the session bound and idle. Releasing the controller as well
+     * means the last client is gone, so the MediaSessionService can shut down instead
+     * of lingering with a notification for something that is no longer playing.
+     */
     fun stop() {
-        if (rules.current.stationId == null) return
+        closing = true
         publish(rules.onUserStop())
         _nowPlaying.value = null
-        controller?.stop()
-    }
-
-    fun release() {
-        controller?.removeListener(playerListener)
-        controller?.release()
-        controller = null
-    }
-
-    private suspend fun onVideoReleased() {
-        if (rules.onVideoReleased() != ResumeDecision.RESUME) return
-        // Abandoning focus is not synchronous with the video player's release. A
-        // request that lands before it has let go collides with a player that still
-        // holds focus. This is a guess, and a named one.
-        delay(RESUME_SETTLE_MS)
-        withContext(Dispatchers.Main.immediate) {
-            if (rules.onVideoReleased() != ResumeDecision.RESUME) return@withContext
-            // prepare, not just play: these are live streams, and after any real pause
-            // the origin has dropped the connection and the buffer is stale. Preparing
-            // reopens at the live edge — which is what "where it left off" means here.
-            connect { c -> c.prepare(); c.play() }
+        waiting.clear()
+        controller?.let { live ->
+            live.stop()
+            live.removeListener(playerListener)
+            live.release()
         }
+        controller = null
     }
 
     private fun resolveStation(uuid: String) {
@@ -252,9 +241,6 @@ class RadioController @Inject constructor(
         _state.value = next
     }
 
-    private companion object {
-        const val RESUME_SETTLE_MS = 250L
-    }
 }
 
 private fun RadioStation.toMediaItem(): MediaItem = MediaItem.Builder()

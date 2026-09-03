@@ -13,27 +13,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRestorer
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import androidx.tv.material3.Button
-import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.worldtv.core.designsystem.component.HealthDot
+import com.worldtv.core.designsystem.component.stationPlayback
+import com.worldtv.core.designsystem.component.toRowState
+import com.worldtv.core.designsystem.tv.component.TvStationRow
 import com.worldtv.core.designsystem.tv.component.LoadingState
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
-import com.worldtv.core.model.HealthBadge
-import com.worldtv.core.model.RadioStation
-import com.worldtv.core.model.StreamState
 import androidx.compose.ui.res.stringResource
 import com.worldtv.feature.radio.R
-import com.worldtv.core.model.badge
-import com.worldtv.core.model.describe
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -47,6 +42,7 @@ fun RadioScreen(
 ) {
     val stations = viewModel.stations.collectAsLazyPagingItems()
     val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
+    val playback by viewModel.playback.collectAsStateWithLifecycle()
     val countries by viewModel.availableCountries.collectAsStateWithLifecycle()
     val categories by viewModel.availableCategories.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
@@ -72,7 +68,11 @@ fun RadioScreen(
         Column(Modifier.weight(1f)) {
         Row(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             Text(
-                text = nowPlaying?.let { stringResource(R.string.radio_now_playing, it.name) }
+                // "Now playing" only while it actually is: the heading used to keep
+                // announcing a station that had been paused or had died.
+                text = nowPlaying
+                    ?.takeIf { playback.playing || playback.buffering }
+                    ?.let { stringResource(R.string.radio_now_playing, it.name) }
                     ?: stringResource(R.string.radio_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = WorldTvColors.OnSurface,
@@ -104,10 +104,15 @@ fun RadioScreen(
                     )
                 }
                 items(favorites, key = { "fav-" + it.uuid }) { station ->
-                    StationRow(
-                        station = station,
-                        isPlaying = station.uuid == nowPlaying?.uuid,
-                        isFavorite = true,
+                    TvStationRow(
+                        state = station.toRowState(
+                            isFavorite = true,
+                            playback = stationPlayback(
+                                isCurrent = station.uuid == nowPlaying?.uuid,
+                                isPlaying = playback.playing,
+                                isBuffering = playback.buffering,
+                            ),
+                        ),
                         onClick = { viewModel.play(station) },
                         onLongClick = {
                             viewModel.toggleFavorite(station.uuid, currentlyFavorite = true)
@@ -130,10 +135,15 @@ fun RadioScreen(
             ) { index ->
                 val station = stations[index] ?: return@items
                 val isFavorite = favorites.any { it.uuid == station.uuid }
-                StationRow(
-                    station = station,
-                    isPlaying = station.uuid == nowPlaying?.uuid,
-                    isFavorite = isFavorite,
+                TvStationRow(
+                    state = station.toRowState(
+                        isFavorite = isFavorite,
+                        playback = stationPlayback(
+                            isCurrent = station.uuid == nowPlaying?.uuid,
+                            isPlaying = playback.playing,
+                            isBuffering = playback.buffering,
+                        ),
+                    ),
                     onClick = { viewModel.play(station) },
                     onLongClick = { viewModel.toggleFavorite(station.uuid, isFavorite) },
                 )
@@ -143,34 +153,4 @@ fun RadioScreen(
     }
 }
 
-@Composable
-private fun StationRow(
-    station: RadioStation,
-    isPlaying: Boolean,
-    isFavorite: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-) {
-    ListItem(
-        selected = isPlaying,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        headlineContent = {
-            Text(
-                text = if (isFavorite) {
-                    stringResource(R.string.radio_favorite_marker, station.name)
-                } else {
-                    station.name
-                },
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        supportingContent = {
-            Text(station.describe(), color = WorldTvColors.OnSurfaceMuted)
-        },
-        trailingContent = { HealthDot(station.badge()) },
-        modifier = Modifier.fillMaxWidth(),
-    )
-}
 

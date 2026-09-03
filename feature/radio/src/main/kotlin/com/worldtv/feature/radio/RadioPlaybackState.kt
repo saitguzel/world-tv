@@ -1,90 +1,62 @@
 package com.worldtv.feature.radio
 
-/** Why playback stopped, translated from media3's constants at the boundary. */
-enum class PauseCause {
-    /** The user pressed pause, here or in the notification. Intent is gone. */
-    USER,
-
-    /** Something else took audio focus for good — the video player. Intent survives. */
-    FOCUS_LOSS,
-
-    /** A notification ducked us. media3 resumes this itself; do not touch it. */
-    TRANSIENT,
-
-    ERROR,
-}
-
-/** What to do when the video player goes away. */
-enum class ResumeDecision { RESUME, DO_NOTHING }
-
 /** What a tap on play/pause should actually do. */
 sealed interface ToggleAction {
     data object Play : ToggleAction
     data object Pause : ToggleAction
 
     /**
-     * Video is holding focus. Record that the user wants radio, but issue no command —
-     * playing now would take focus from the channel they are watching and kill it
-     * silently, from a bar they are not even looking at.
+     * Nothing at all: either there is no station to act on, or a video is holding audio
+     * focus and playing now would silently kill the channel the user is watching from a
+     * bar they are not even looking at.
      */
-    data object DeferUntilVideoEnds : ToggleAction
-
     data object Nothing : ToggleAction
 }
 
-/** Everything the radio UI needs, and the whole basis for the resume decision. */
+/** Everything the radio UI needs. */
 data class RadioUiState(
     val stationId: String? = null,
     val playing: Boolean = false,
     val buffering: Boolean = false,
-    /** The user's standing wish, which outlives a focus loss but not a user pause. */
-    val userWantsPlayback: Boolean = false,
-    val interruptedByFocusLoss: Boolean = false,
 )
 
 /**
  * The rule for what the radio should be doing.
  *
- * Pure by design — no Android, no media3 — for the same reason `PlaybackConfirmation`
- * is: this environment has no usable emulator, so a rule that can only be checked by
- * hand on a device is worth much less than one with a testable core. The controller
- * translates media3 callbacks into the enums above and does as it is told.
+ * Pure by design — no Android, no media3 — because this environment has no usable
+ * emulator and a rule that can only be checked by hand on a device is worth much less
+ * than one with a testable core. The controller translates media3 callbacks into the
+ * vocabulary here and does as it is told.
  *
- * The distinction that carries the whole feature is *why* playback stopped. media3
- * reports it — a permanent focus loss is the system taking the radio away and the user
- * still wants it back; a user pause is the user changing their mind. Deriving that a
- * second time, worse, in our own flags would be the obvious mistake.
+ * **The radio does not resume by itself.** An earlier version kept the user's standing
+ * wish alive across a focus loss so that leaving a channel handed the radio back. It
+ * worked exactly as designed and was wrong in use: the same event — video letting go of
+ * audio focus — happens when you back out of the player, when you switch tabs, and when
+ * you leave the app, and sound starting on its own in two of those three is startling
+ * rather than helpful. Opening a channel now ends the radio session; starting it again
+ * is one tap on a bar that never went away.
  *
- * Not thread-safe: every caller is a media3 callback, and those arrive on the
- * application thread.
+ * What is left is only ever a report of what the session is doing, which is why every
+ * field here is written from a session callback rather than from a command we issued.
+ *
+ * Not thread-safe, and it does not need to be: every caller is a media3 callback, and
+ * those arrive on the application thread.
  */
 class RadioPlaybackState {
 
     var current: RadioUiState = RadioUiState()
         private set
 
-    fun onUserPlay(stationId: String): RadioUiState = set(
-        current.copy(
-            stationId = stationId,
-            userWantsPlayback = true,
-            interruptedByFocusLoss = false,
-        ),
-    )
+    fun onUserPlay(stationId: String): RadioUiState = set(current.copy(stationId = stationId))
 
     fun onUserToggle(videoActive: Boolean): ToggleAction = when {
         current.stationId == null -> ToggleAction.Nothing
-        current.playing -> {
-            set(current.copy(userWantsPlayback = false))
-            ToggleAction.Pause
-        }
-        videoActive -> {
-            set(current.copy(userWantsPlayback = true, interruptedByFocusLoss = true))
-            ToggleAction.DeferUntilVideoEnds
-        }
-        else -> {
-            set(current.copy(userWantsPlayback = true))
-            ToggleAction.Play
-        }
+        current.playing -> ToggleAction.Pause
+        // Defensive: the bar is hidden while the player is on screen, and a player that
+        // has been navigated away from has already let go of focus. If both of those
+        // ever stop being true, the radio must still not take a channel's sound away.
+        videoActive -> ToggleAction.Nothing
+        else -> ToggleAction.Play
     }
 
     fun onUserStop(): RadioUiState = set(RadioUiState())
@@ -93,53 +65,44 @@ class RadioPlaybackState {
         current.copy(
             playing = playing,
             buffering = if (playing) false else current.buffering,
-            // Playing again means whatever interrupted us is over.
-            interruptedByFocusLoss = if (playing) false else current.interruptedByFocusLoss,
         ),
     )
 
     fun onSessionBufferingChanged(buffering: Boolean): RadioUiState =
         set(current.copy(buffering = buffering))
 
-    fun onSessionPaused(cause: PauseCause): RadioUiState = when (cause) {
-        // The user changed their mind. Nothing should bring it back by itself.
-        PauseCause.USER -> set(current.copy(playing = false, userWantsPlayback = false))
-
-        PauseCause.FOCUS_LOSS -> set(
-            current.copy(playing = false, interruptedByFocusLoss = true),
-        )
-
-        // media3 resumes a transient duck on its own; claiming it as ours would make
-        // us request focus a second time when it ends.
-        PauseCause.TRANSIENT -> set(current.copy(playing = false))
-
-        // A dead stream is not something to silently retry into.
-        PauseCause.ERROR -> set(
-            current.copy(playing = false, buffering = false, userWantsPlayback = false),
-        )
-    }
-
     fun onSessionItemChanged(stationId: String?): RadioUiState =
         set(current.copy(stationId = stationId))
 
-    /** The controller lost its connection; playback state is unknown, intent is not. */
-    fun onDisconnected(): RadioUiState =
-        set(current.copy(playing = false, buffering = false))
+    /**
+     * Restores state from a session that outlived the process.
+     *
+     * The service can keep playing after the activity process dies; a fresh controller
+     * would otherwise start empty and show no bar while radio is audibly playing.
+     *
+     * An empty session changes nothing: connecting is also what a fresh `play()` does,
+     * and the session has not been given its item yet at that point — reading it as
+     * "nothing is on" would erase the station that call just recorded.
+     */
+    fun onSessionSeeded(stationId: String?, playing: Boolean, buffering: Boolean): RadioUiState {
+        if (stationId == null) return current
+        return set(current.copy(stationId = stationId, playing = playing, buffering = buffering))
+    }
 
-    /** Could not reach the service. Drop the intent so no resume is queued forever. */
-    fun onConnectFailed(): RadioUiState =
-        set(current.copy(playing = false, buffering = false, userWantsPlayback = false))
+    /** A dead stream. Clearing buffering too, or the row claims to be connecting forever. */
+    fun onSessionError(): RadioUiState = set(current.copy(playing = false, buffering = false))
+
+    /** The controller lost its connection; playback state is unknown. */
+    fun onDisconnected(): RadioUiState = set(current.copy(playing = false, buffering = false))
 
     /**
-     * Video has gone away. Resume only if the user still wants radio and it was the
-     * system, not them, that stopped it.
+     * Could not reach the service.
+     *
+     * Cleared completely, station included: keeping the id left the mini player on
+     * screen advertising something that would never play, with a play button that only
+     * failed again.
      */
-    fun onVideoReleased(): ResumeDecision = when {
-        current.stationId == null -> ResumeDecision.DO_NOTHING
-        !current.userWantsPlayback -> ResumeDecision.DO_NOTHING
-        current.playing -> ResumeDecision.DO_NOTHING
-        else -> ResumeDecision.RESUME
-    }
+    fun onConnectFailed(): RadioUiState = set(RadioUiState())
 
     private fun set(next: RadioUiState): RadioUiState {
         current = next

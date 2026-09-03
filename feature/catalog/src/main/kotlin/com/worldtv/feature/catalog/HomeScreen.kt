@@ -33,6 +33,7 @@ import com.worldtv.core.designsystem.tv.component.TvShelf
 import com.worldtv.core.designsystem.theme.WorldTvColors
 import com.worldtv.core.designsystem.theme.WorldTvDimens
 import com.worldtv.core.model.ChannelSummary
+import com.worldtv.core.model.RadioStation
 import androidx.compose.ui.res.stringResource
 import androidx.annotation.StringRes
 import com.worldtv.feature.catalog.R
@@ -48,6 +49,8 @@ import com.worldtv.feature.catalog.R
 fun HomeScreen(
     onExit: () -> Unit,
     onChannelSelected: (String) -> Unit,
+    onRadioSelected: (String) -> Unit,
+    onCategorySelected: (String) -> Unit,
     onBrowse: () -> Unit,
     onSearch: () -> Unit,
     onRadio: () -> Unit,
@@ -141,6 +144,36 @@ fun HomeScreen(
         if (state.favorites.isNotEmpty()) {
             shelf(R.string.home_favorites, state.favorites, viewModel, onChannelSelected)
         }
+        // The row a first run actually has something to put in: no history and no
+        // favourites yet, but the catalog is full of channels worth opening.
+        if (state.popular.isNotEmpty()) {
+            shelf(R.string.home_popular, state.popular, viewModel, onChannelSelected)
+        }
+
+        if (state.categories.isNotEmpty()) {
+            item {
+                SectionTitle(stringResource(R.string.home_categories))
+                TvShelf(Modifier.height(72.dp)) {
+                    items(state.categories, key = { it.id }) { category ->
+                        Button(onClick = { onCategorySelected(category.id) }) {
+                            Text(
+                                stringResource(
+                                    R.string.category_with_count,
+                                    category.name,
+                                    category.channelCount,
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Radio below the channel rows, above the country wall: a television is a
+        // television first, but the stations are content and the countries are a filter.
+        stationShelf(R.string.home_radio_recent, state.radioRecents, onRadioSelected)
+        stationShelf(R.string.home_radio_favorites, state.radioFavorites, onRadioSelected)
+        stationShelf(R.string.home_radio_popular, state.radioPopular, onRadioSelected)
 
         if (state.countries.isNotEmpty()) {
             item {
@@ -181,6 +214,32 @@ private fun androidx.compose.foundation.lazy.LazyListScope.shelf(
                         viewModel.onChannelOpened(channels, summary.channel.id)
                         onChannelSelected(summary.channel.id)
                     },
+                    modifier = Modifier.size(WorldTvDimens.CardWidth, WorldTvDimens.CardHeight),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A shelf of radio stations.
+ *
+ * The same card as a channel, deliberately: a station has a logo, a name and a health
+ * badge, and inventing a second card for it would leave two things to keep in step.
+ */
+private fun androidx.compose.foundation.lazy.LazyListScope.stationShelf(
+    @StringRes titleRes: Int,
+    stations: List<RadioStation>,
+    onRadioSelected: (String) -> Unit,
+) {
+    if (stations.isEmpty()) return
+    item {
+        SectionTitle(stringResource(titleRes))
+        TvShelf(Modifier.height(WorldTvDimens.CardHeight + 24.dp)) {
+            items(stations, key = { it.uuid }) { station ->
+                ChannelCard(
+                    state = station.toCardState(),
+                    onClick = { onRadioSelected(station.uuid) },
                     modifier = Modifier.size(WorldTvDimens.CardWidth, WorldTvDimens.CardHeight),
                 )
             }
