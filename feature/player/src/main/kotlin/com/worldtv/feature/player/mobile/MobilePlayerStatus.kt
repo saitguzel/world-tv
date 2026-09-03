@@ -55,11 +55,12 @@ fun MobileLoadingBackdrop(logoUrl: String?, modifier: Modifier = Modifier) {
                     .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .blur(48.dp)
-                    .background(Color.Black.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxSize().blur(48.dp),
             )
+            // Over the image rather than under it: as a background modifier on the
+            // image itself, this scrim was painted behind the very thing it was meant
+            // to dim, leaving the failure panel to be read against a bright blur.
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
         }
     }
 }
@@ -95,7 +96,11 @@ fun MobileChannelUnavailable(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier.padding(32.dp),
+        modifier
+            // Same panel treatment as the television screen, and for the same reason.
+            .clip(RoundedCornerShape(16.dp))
+            .background(WorldTvColors.Scrim)
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {

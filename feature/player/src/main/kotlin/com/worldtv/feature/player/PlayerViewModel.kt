@@ -308,7 +308,10 @@ class PlayerViewModel @Inject constructor(
             showChannelCardBriefly()
             favoritesRepository.recordWatch(channelId, FavoritesRepository.Kind.CHANNEL)
 
-            if (streams.isEmpty()) return@launch
+            if (streams.isEmpty()) {
+                markUnavailable()
+                return@launch
+            }
             playCurrentStream()
             prefetchNeighbours()
         }
@@ -334,7 +337,7 @@ class PlayerViewModel @Inject constructor(
     @androidx.annotation.OptIn(markerClass = [UnstableApi::class])
     private fun playCurrentStream() {
         val stream = streams.getOrNull(streamIndex) ?: run {
-            _uiState.update { it.copy(unavailable = true, isBuffering = false) }
+            markUnavailable()
             return
         }
 
@@ -413,13 +416,31 @@ class PlayerViewModel @Inject constructor(
         slowLoadJob?.cancel()
         streamIndex += 1
         if (streamIndex >= streams.size) {
-            _uiState.update {
-                it.copy(unavailable = true, isBuffering = false, tryingAlternative = false)
-            }
+            markUnavailable()
             return
         }
         _uiState.update { it.copy(tryingAlternative = true) }
         playCurrentStream()
+    }
+
+    /**
+     * Nothing here can be played.
+     *
+     * Stopping the player matters as much as the flag. Until this existed, a channel
+     * whose streams all failed — and a channel with no streams at all, which never
+     * reached the player in the first place — left the *previous* channel loaded behind
+     * the failure panel: its last frame under the message, and on the second path its
+     * sound still playing. The panel then had to be read against a picture of a channel
+     * the user had already left.
+     */
+    private fun markUnavailable() {
+        if (playerDelegate.isInitialized()) {
+            player.stop()
+            player.clearMediaItems()
+        }
+        _uiState.update {
+            it.copy(unavailable = true, isBuffering = false, tryingAlternative = false)
+        }
     }
 
     fun retry() {

@@ -57,11 +57,12 @@ fun LoadingBackdrop(logoUrl: String?, modifier: Modifier = Modifier) {
                     .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .blur(48.dp)
-                    .background(Color.Black.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxSize().blur(48.dp),
             )
+            // Over the image rather than under it: as a background modifier on the
+            // image itself, this scrim was painted behind the very thing it was meant
+            // to dim, leaving the failure panel to be read against a bright blur.
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
         }
     }
 }
@@ -191,7 +192,13 @@ fun ChannelUnavailable(
     LaunchedEffect(Unit) { retryFocus.requestFocus() }
 
     Column(
-        modifier.padding(48.dp),
+        modifier
+            // Its own panel, like the channel card: whatever is behind — a blurred
+            // logo, or a frame that has not been replaced yet — the message and the
+            // two buttons have to be readable against it.
+            .clip(RoundedCornerShape(16.dp))
+            .background(WorldTvColors.Scrim)
+            .padding(48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
